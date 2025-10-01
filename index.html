@@ -678,7 +678,7 @@
             marker.addEventListener('click', (event) => {
                 event.stopPropagation();
                 selectMarker(markerData.id);
-                showMarkerInfo(markerData, markerData.x, markerData.y);
+                showMarkerInfo(markerData);
             });
             
             // Add marker to image container
@@ -876,6 +876,9 @@
                 markerDescription.value = '';
                 markerLink.value = '';
                 
+                // Hide marker info
+                hideMarkerInfo();
+                
                 // Update marker list UI
                 if (markers.length === 0) {
                     markerList.innerHTML = '<p class="empty-state">No markers added yet</p>';
@@ -884,7 +887,7 @@
         }
 
         // Show marker info
-        function showMarkerInfo(marker, x, y) {
+        function showMarkerInfo(marker) {
             infoTitle.textContent = marker.title;
             infoDescription.textContent = marker.description;
             
@@ -896,9 +899,28 @@
                 infoLink.style.display = 'none';
             }
             
-            // Position the info box
-            markerInfo.style.left = `${x + 20}px`;
-            markerInfo.style.top = `${y}px`;
+            // Position the info box near the marker
+            const markerElement = document.getElementById(`marker-${marker.id}`);
+            if (markerElement) {
+                const rect = markerElement.getBoundingClientRect();
+                const containerRect = document.getElementById('imageArea').getBoundingClientRect();
+                
+                let left = rect.left + rect.width / 2;
+                let top = rect.top + rect.height;
+                
+                // Adjust position if info box would go outside the container
+                if (left + 250 > containerRect.right) {
+                    left = containerRect.right - 250;
+                }
+                
+                if (top + 150 > containerRect.bottom) {
+                    top = rect.top - 150;
+                }
+                
+                markerInfo.style.left = `${left - containerRect.left}px`;
+                markerInfo.style.top = `${top - containerRect.top}px`;
+            }
+            
             markerInfo.style.display = 'block';
         }
 
@@ -917,6 +939,7 @@
                 markerTitle.value = '';
                 markerDescription.value = '';
                 markerLink.value = '';
+                hideMarkerInfo();
             }
         }
 
@@ -959,7 +982,7 @@
                     // Show marker info
                     const markerData = markers.find(m => m.id === markerId);
                     if (markerData) {
-                        showMarkerInfo(markerData, markerData.x, markerData.y);
+                        showMarkerInfo(markerData);
                     }
                 });
                 
@@ -1189,6 +1212,13 @@
         // Initialize the app
         function init() {
             updateProjectsList();
+            
+            // Hide marker info when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.marker') && !e.target.closest('.marker-info')) {
+                    hideMarkerInfo();
+                }
+            });
         }
 
         // Run initialization when DOM is loaded
