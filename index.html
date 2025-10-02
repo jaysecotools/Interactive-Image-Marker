@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive Image Marker App</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
     <style>
         :root {
             --primary-color: #4a6fa5;
@@ -85,6 +87,7 @@
             box-shadow: var(--box-shadow);
             position: relative;
             overflow: hidden;
+            height: 70vh;
         }
 
         .tool-section {
@@ -130,6 +133,15 @@
 
         .btn-success:hover {
             background-color: #218838;
+        }
+
+        .btn-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+        .btn-warning:hover {
+            background-color: #e0a800;
         }
 
         input[type="file"] {
@@ -187,14 +199,22 @@
             resize: vertical;
         }
 
-        #imageCanvas {
+        #imageCanvas, #panoramaViewer {
             max-width: 100%;
-            max-height: 70vh;
+            max-height: 100%;
             display: block;
             margin: 0 auto;
             border: 1px solid #eee;
             border-radius: var(--border-radius);
             cursor: crosshair;
+        }
+
+        #panoramaViewer {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
         }
 
         .marker {
@@ -309,6 +329,11 @@
             text-align: center;
             padding: 40px 20px;
             color: #6c757d;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
         }
 
         .empty-state i {
@@ -393,6 +418,29 @@
             margin-top: 5px;
         }
 
+        .viewer-controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+            display: flex;
+            gap: 10px;
+        }
+
+        .instructions-360 {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            z-index: 50;
+        }
+
         @media (max-width: 768px) {
             .app-container {
                 flex-direction: column;
@@ -416,7 +464,8 @@
                 <div class="tool-section">
                     <h3>Upload Image</h3>
                     <input type="file" id="imageUpload" accept="image/*">
-                    <button id="toggle360" class="btn">Enable 360° View</button>
+                    <button id="toggle360" class="btn btn-warning">Enable 360° View</button>
+                    <div class="export-description">For 360° images, use equirectangular format</div>
                 </div>
 
                 <div class="tool-section">
@@ -496,6 +545,13 @@
                         <p>Upload an image to get started</p>
                     </div>
                     <canvas id="imageCanvas" class="hidden"></canvas>
+                    <div id="panoramaViewer" class="hidden"></div>
+                    <div id="instructions360" class="instructions-360 hidden">
+                        <i class="fas fa-mouse"></i> Click and drag to look around
+                    </div>
+                    <div class="viewer-controls">
+                        <button id="resetView" class="btn hidden">Reset View</button>
+                    </div>
                 </div>
                 <div id="markerInfo" class="marker-info">
                     <span class="close-info">×</span>
@@ -518,6 +574,9 @@
         let dragOffsetX = 0;
         let dragOffsetY = 0;
         
+        // Three.js variables for 360 viewer
+        let scene, camera, renderer, controls, sphere;
+        
         let canvas = document.getElementById('imageCanvas');
         let ctx = canvas.getContext('2d');
         let canvasOffsetX = 0;
@@ -526,6 +585,9 @@
         // DOM Elements
         const imageUpload = document.getElementById('imageUpload');
         const toggle360Btn = document.getElementById('toggle360');
+        const resetViewBtn = document.getElementById('resetView');
+        const panoramaViewer = document.getElementById('panoramaViewer');
+        const instructions360 = document.getElementById('instructions360');
         const markerTypes = document.querySelectorAll('.marker-type');
         const markerTitle = document.getElementById('markerTitle');
         const markerDescription = document.getElementById('markerDescription');
@@ -550,6 +612,7 @@
         // Event Listeners
         imageUpload.addEventListener('change', handleImageUpload);
         toggle360Btn.addEventListener('click', toggle360Mode);
+        resetViewBtn.addEventListener('click', reset360View);
         saveMarkerBtn.addEventListener('click', saveMarker);
         updateMarkerBtn.addEventListener('click', updateMarker);
         deleteMarkerBtn.addEventListener('click', deleteMarker);
@@ -587,9 +650,14 @@
                 const img = new Image();
                 img.onload = function() {
                     currentImage = img;
-                    setupCanvas(img);
+                    
+                    if (is360Mode) {
+                        setup360Viewer(img);
+                    } else {
+                        setupCanvas(img);
+                    }
+                    
                     emptyState.classList.add('hidden');
-                    canvas.classList.remove('hidden');
                     markers = []; // Clear existing markers when new image is loaded
                     selectedMarkerId = null;
                     updateMarkerList();
@@ -602,9 +670,14 @@
 
         // Setup canvas dimensions and position
         function setupCanvas(img) {
+            canvas.classList.remove('hidden');
+            panoramaViewer.classList.add('hidden');
+            instructions360.classList.add('hidden');
+            resetViewBtn.classList.add('hidden');
+            
             const container = document.getElementById('imageArea');
             const maxWidth = container.clientWidth - 40; // Account for padding
-            const maxHeight = window.innerHeight * 0.7;
+            const maxHeight = container.clientHeight - 40;
 
             let width = img.width;
             let height = img.height;
@@ -635,18 +708,273 @@
             canvas.addEventListener('click', addMarker);
         }
 
+        // Setup 360 viewer
+        function setup360Viewer(img) {
+            canvas.classList.add('hidden');
+            panoramaViewer.classList.remove('hidden');
+            instructions360.classList.remove('hidden');
+            resetViewBtn.classList.remove('hidden');
+            
+            // Clear previous Three.js scene if it exists
+            if (renderer) {
+                panoramaViewer.removeChild(renderer.domElement);
+            }
+            
+            // Set up Three.js scene
+            scene = new THREE.Scene();
+            
+            // Create camera
+            camera = new THREE.PerspectiveCamera(75, panoramaViewer.clientWidth / panoramaViewer.clientHeight, 0.1, 1000);
+            camera.position.set(0, 0, 0.1);
+            
+            // Create renderer
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(panoramaViewer.clientWidth, panoramaViewer.clientHeight);
+            panoramaViewer.appendChild(renderer.domElement);
+            
+            // Create sphere geometry
+            const geometry = new THREE.SphereGeometry(500, 60, 40);
+            geometry.scale(-1, 1, 1); // Invert the sphere to view from inside
+            
+            // Create texture from image
+            const texture = new THREE.Texture(img);
+            texture.needsUpdate = true;
+            
+            // Create material with texture
+            const material = new THREE.MeshBasicMaterial({ map: texture });
+            
+            // Create mesh and add to scene
+            sphere = new THREE.Mesh(geometry, material);
+            scene.add(sphere);
+            
+            // Add controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableZoom = true;
+            controls.enablePan = false;
+            controls.rotateSpeed = 0.5;
+            controls.minDistance = 0.1;
+            controls.maxDistance = 1.0;
+            
+            // Handle window resize
+            window.addEventListener('resize', onWindowResize);
+            
+            // Start animation loop
+            animate();
+            
+            // Add click event for markers on the 360 viewer
+            renderer.domElement.addEventListener('click', addMarker360);
+        }
+
+        // Animation loop for 360 viewer
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // Handle window resize for 360 viewer
+        function onWindowResize() {
+            if (camera && renderer) {
+                camera.aspect = panoramaViewer.clientWidth / panoramaViewer.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(panoramaViewer.clientWidth, panoramaViewer.clientHeight);
+            }
+        }
+
+        // Add marker to 360 viewer
+        function addMarker360(e) {
+            if (isDragging) {
+                isDragging = false;
+                return;
+            }
+            
+            // Convert mouse coordinates to 3D world coordinates
+            const mouse = new THREE.Vector2();
+            const rect = renderer.domElement.getBoundingClientRect();
+            
+            mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+            
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera(mouse, camera);
+            
+            const intersects = raycaster.intersectObject(sphere);
+            
+            if (intersects.length > 0) {
+                const point = intersects[0].point;
+                
+                // Convert 3D point to spherical coordinates
+                const spherical = new THREE.Spherical();
+                spherical.setFromVector3(point);
+                
+                // Create marker data with spherical coordinates
+                const markerId = Date.now();
+                const markerData = {
+                    id: markerId,
+                    type: currentMarkerType,
+                    phi: spherical.phi,    // vertical angle
+                    theta: spherical.theta, // horizontal angle
+                    title: markerTitle.value || `Marker ${markers.length + 1}`,
+                    description: markerDescription.value || '',
+                    link: markerLink.value || '',
+                    is360: true
+                };
+                
+                markers.push(markerData);
+                
+                // Create marker element
+                create360MarkerElement(markerData);
+                
+                // Select the new marker
+                selectMarker(markerId);
+                
+                // Clear form fields
+                markerTitle.value = '';
+                markerDescription.value = '';
+                markerLink.value = '';
+                
+                // Update marker list
+                updateMarkerList();
+            }
+        }
+
+        // Create 360 marker element
+        function create360MarkerElement(markerData) {
+            // Convert spherical coordinates to 3D position
+            const spherical = new THREE.Spherical(500, markerData.phi, markerData.theta);
+            const position = new THREE.Vector3();
+            position.setFromSpherical(spherical);
+            
+            // Project 3D position to screen coordinates
+            const vector = position.clone();
+            vector.project(camera);
+            
+            const x = (vector.x * 0.5 + 0.5) * renderer.domElement.clientWidth;
+            const y = -(vector.y * 0.5 - 0.5) * renderer.domElement.clientHeight;
+            
+            const marker = document.createElement('div');
+            marker.className = `marker ${markerData.type}`;
+            marker.id = `marker-${markerData.id}`;
+            marker.style.left = `${x}px`;
+            marker.style.top = `${y}px`;
+            
+            // Set icon based on marker type
+            let iconClass = 'fas fa-info-circle';
+            if (markerData.type === 'link') iconClass = 'fas fa-link';
+            else if (markerData.type === 'video') iconClass = 'fas fa-video';
+            else if (markerData.type === 'audio') iconClass = 'fas fa-volume-up';
+            
+            marker.innerHTML = `<i class="${iconClass}"></i>`;
+            
+            // Add event listeners
+            marker.addEventListener('mousedown', startDragging360);
+            marker.addEventListener('click', (event) => {
+                event.stopPropagation();
+                selectMarker(markerData.id);
+                showMarkerInfo(markerData);
+            });
+            
+            // Add marker to panorama viewer
+            panoramaViewer.appendChild(marker);
+            
+            return marker;
+        }
+
+        // Start dragging a 360 marker
+        function startDragging360(e) {
+            e.stopPropagation();
+            isDragging = true;
+            const marker = e.target.closest('.marker');
+            const markerId = parseInt(marker.id.replace('marker-', ''));
+            
+            // Select the marker being dragged
+            selectMarker(markerId);
+            
+            const rect = marker.getBoundingClientRect();
+            const markerX = rect.left + rect.width / 2;
+            const markerY = rect.top + rect.height / 2;
+            
+            dragOffsetX = e.clientX - markerX;
+            dragOffsetY = e.clientY - markerY;
+            
+            document.addEventListener('mousemove', dragMarker360);
+            document.addEventListener('mouseup', stopDragging360);
+        }
+
+        // Drag 360 marker
+        function dragMarker360(e) {
+            if (!isDragging) return;
+            
+            const marker = document.getElementById(`marker-${selectedMarkerId}`);
+            if (!marker) return;
+            
+            const rect = panoramaViewer.getBoundingClientRect();
+            let x = e.clientX - dragOffsetX - rect.left;
+            let y = e.clientY - dragOffsetY - rect.top;
+            
+            // Constrain marker to viewer bounds
+            x = Math.max(0, Math.min(x, rect.width));
+            y = Math.max(0, Math.min(y, rect.height));
+            
+            marker.style.left = `${x}px`;
+            marker.style.top = `${y}px`;
+            
+            // Convert screen coordinates back to spherical coordinates
+            const vector = new THREE.Vector3();
+            vector.x = (x / rect.width) * 2 - 1;
+            vector.y = -(y / rect.height) * 2 + 1;
+            vector.z = 0.5;
+            
+            vector.unproject(camera);
+            
+            const direction = vector.sub(camera.position).normalize();
+            const spherical = new THREE.Spherical();
+            spherical.setFromVector3(direction);
+            
+            // Update marker data
+            const markerIndex = markers.findIndex(m => m.id === selectedMarkerId);
+            if (markerIndex !== -1) {
+                markers[markerIndex].phi = spherical.phi;
+                markers[markerIndex].theta = spherical.theta;
+            }
+        }
+
+        // Stop dragging 360 marker
+        function stopDragging360() {
+            isDragging = false;
+            document.removeEventListener('mousemove', dragMarker360);
+            document.removeEventListener('mouseup', stopDragging360);
+        }
+
         // Toggle 360 mode
         function toggle360Mode() {
             is360Mode = !is360Mode;
             toggle360Btn.textContent = is360Mode ? 'Disable 360° View' : 'Enable 360° View';
+            toggle360Btn.classList.toggle('btn-warning', is360Mode);
+            toggle360Btn.classList.toggle('btn', !is360Mode);
             
-            if (is360Mode && currentImage) {
-                // In a real implementation, you would use a 360 viewer library here
-                alert('360° mode activated. In a full implementation, this would enable 360° image viewing.');
+            if (currentImage) {
+                if (is360Mode) {
+                    setup360Viewer(currentImage);
+                } else {
+                    setupCanvas(currentImage);
+                }
+                renderMarkers();
+            } else {
+                alert('Please upload an image first.');
+                is360Mode = false;
+                toggle360Btn.textContent = 'Enable 360° View';
             }
         }
 
-        // Add marker to canvas
+        // Reset 360 view
+        function reset360View() {
+            if (controls) {
+                controls.reset();
+            }
+        }
+
+        // Add marker to canvas (for 2D mode)
         function addMarker(e) {
             // Don't add marker if we're dragging an existing one
             if (isDragging) {
@@ -667,7 +995,8 @@
                 y: y,
                 title: markerTitle.value || `Marker ${markers.length + 1}`,
                 description: markerDescription.value || '',
-                link: markerLink.value || ''
+                link: markerLink.value || '',
+                is360: false
             };
             
             markers.push(markerData);
@@ -687,7 +1016,7 @@
             updateMarkerList();
         }
 
-        // Create marker DOM element
+        // Create marker DOM element (for 2D mode)
         function createMarkerElement(markerData) {
             const marker = document.createElement('div');
             marker.className = `marker ${markerData.type}`;
@@ -717,7 +1046,7 @@
             return marker;
         }
 
-        // Start dragging a marker
+        // Start dragging a marker (for 2D mode)
         function startDragging(e) {
             e.stopPropagation();
             isDragging = true;
@@ -738,7 +1067,7 @@
             document.addEventListener('mouseup', stopDragging);
         }
 
-        // Drag marker
+        // Drag marker (for 2D mode)
         function dragMarker(e) {
             if (!isDragging) return;
             
@@ -764,7 +1093,7 @@
             }
         }
 
-        // Stop dragging marker
+        // Stop dragging marker (for 2D mode)
         function stopDragging() {
             isDragging = false;
             document.removeEventListener('mousemove', dragMarker);
@@ -986,7 +1315,7 @@
                     <div class="marker-item ${marker.id === selectedMarkerId ? 'selected' : ''}" data-id="${marker.id}">
                         <div class="marker-item-info">
                             <div class="marker-item-title">${marker.title}</div>
-                            <div class="marker-item-type">${marker.type} marker</div>
+                            <div class="marker-item-type">${marker.type} marker ${marker.is360 ? '(360°)' : ''}</div>
                         </div>
                         <div class="marker-item-actions">
                             <button class="marker-action-btn edit-btn" title="Edit marker">
@@ -1038,7 +1367,11 @@
             
             // Add markers to canvas
             markers.forEach(marker => {
-                createMarkerElement(marker);
+                if (is360Mode && marker.is360) {
+                    create360MarkerElement(marker);
+                } else if (!is360Mode && !marker.is360) {
+                    createMarkerElement(marker);
+                }
             });
             
             updateMarkerList();
@@ -1141,14 +1474,20 @@
                     const img = new Image();
                     img.onload = function() {
                         currentImage = img;
-                        setupCanvas(img);
-                        emptyState.classList.add('hidden');
-                        canvas.classList.remove('hidden');
-                        
-                        markers = project.markers || [];
                         is360Mode = project.is360 || false;
                         toggle360Btn.textContent = is360Mode ? 'Disable 360° View' : 'Enable 360° View';
+                        toggle360Btn.classList.toggle('btn-warning', is360Mode);
+                        toggle360Btn.classList.toggle('btn', !is360Mode);
                         
+                        if (is360Mode) {
+                            setup360Viewer(img);
+                        } else {
+                            setupCanvas(img);
+                        }
+                        
+                        emptyState.classList.add('hidden');
+                        
+                        markers = project.markers || [];
                         selectedMarkerId = null;
                         renderMarkers();
                         
@@ -1215,6 +1554,18 @@
 
         // Create standalone HTML content
         function createStandaloneHTML(projectName) {
+            // Check if this is a 360 project
+            const is360Project = markers.some(marker => marker.is360) || is360Mode;
+            
+            if (is360Project) {
+                return create360StandaloneHTML(projectName);
+            } else {
+                return create2DStandaloneHTML(projectName);
+            }
+        }
+
+        // Create standalone 2D HTML content
+        function create2DStandaloneHTML(projectName) {
             return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1440,6 +1791,345 @@
 </html>`;
         }
 
+        // Create standalone 360 HTML content
+        function create360StandaloneHTML(projectName) {
+            return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${projectName}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #4a6fa5;
+            margin-bottom: 20px;
+        }
+        
+        .viewer-container {
+            position: relative;
+            width: 100%;
+            height: 60vh;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        #panoramaViewer {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .marker {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s;
+            z-index: 10;
+        }
+        
+        .marker:hover {
+            transform: translate(-50%, -50%) scale(1.2);
+        }
+        
+        .marker.info { background-color: #17a2b8; }
+        .marker.link { background-color: #28a745; }
+        .marker.video { background-color: #dc3545; }
+        .marker.audio { background-color: #ffc107; }
+        
+        .marker-info {
+            position: absolute;
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            min-width: 200px;
+            max-width: 300px;
+            z-index: 100;
+            display: none;
+        }
+        
+        .marker-info h4 {
+            margin-bottom: 8px;
+            color: #4a6fa5;
+        }
+        
+        .marker-info p {
+            margin-bottom: 10px;
+        }
+        
+        .marker-info a {
+            color: #4a6fa5;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .marker-info a:hover {
+            text-decoration: underline;
+        }
+        
+        .close-info {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #999;
+        }
+        
+        .instructions {
+            text-align: center;
+            color: #666;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+        
+        .instructions-360 {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            z-index: 50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>${projectName}</h1>
+        <div class="viewer-container">
+            <div id="panoramaViewer"></div>
+            <div id="markersContainer"></div>
+            <div class="instructions-360">
+                <i class="fas fa-mouse"></i> Click and drag to look around • Click markers for info
+            </div>
+            <div id="markerInfo" class="marker-info">
+                <span class="close-info">×</span>
+                <h4 id="infoTitle"></h4>
+                <p id="infoDescription"></p>
+                <a id="infoLink" href="#" target="_blank"></a>
+            </div>
+        </div>
+        <p class="instructions">360° Interactive Experience - Drag to look around and click markers for information</p>
+    </div>
+
+    <script>
+        // Marker data
+        const markersData = ${JSON.stringify(markers.filter(m => m.is360))};
+        
+        // Three.js variables
+        let scene, camera, renderer, controls, sphere;
+        
+        // DOM elements
+        const panoramaViewer = document.getElementById('panoramaViewer');
+        const markersContainer = document.getElementById('markersContainer');
+        const markerInfo = document.getElementById('markerInfo');
+        const infoTitle = document.getElementById('infoTitle');
+        const infoDescription = document.getElementById('infoDescription');
+        const infoLink = document.getElementById('infoLink');
+        const closeInfo = document.querySelector('.close-info');
+        
+        // Initialize Three.js scene
+        function init() {
+            // Create scene
+            scene = new THREE.Scene();
+            
+            // Create camera
+            camera = new THREE.PerspectiveCamera(75, panoramaViewer.clientWidth / panoramaViewer.clientHeight, 0.1, 1000);
+            camera.position.set(0, 0, 0.1);
+            
+            // Create renderer
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(panoramaViewer.clientWidth, panoramaViewer.clientHeight);
+            panoramaViewer.appendChild(renderer.domElement);
+            
+            // Create sphere geometry
+            const geometry = new THREE.SphereGeometry(500, 60, 40);
+            geometry.scale(-1, 1, 1);
+            
+            // Create texture from image
+            const texture = new THREE.Texture();
+            const image = new Image();
+            image.onload = function() {
+                texture.image = image;
+                texture.needsUpdate = true;
+                createMarkers();
+            };
+            image.src = '${currentImage.src}';
+            
+            // Create material
+            const material = new THREE.MeshBasicMaterial({ map: texture });
+            
+            // Create mesh
+            sphere = new THREE.Mesh(geometry, material);
+            scene.add(sphere);
+            
+            // Add controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableZoom = true;
+            controls.enablePan = false;
+            controls.rotateSpeed = 0.5;
+            
+            // Handle window resize
+            window.addEventListener('resize', onWindowResize);
+            
+            // Start animation
+            animate();
+        }
+        
+        function createMarkers() {
+            markersData.forEach(marker => {
+                // Convert spherical coordinates to 3D position
+                const spherical = new THREE.Spherical(500, marker.phi, marker.theta);
+                const position = new THREE.Vector3();
+                position.setFromSpherical(spherical);
+                
+                // Project to screen coordinates
+                updateMarkerPosition(marker, position);
+            });
+        }
+        
+        function updateMarkerPosition(markerData, position) {
+            const vector = position.clone();
+            vector.project(camera);
+            
+            const x = (vector.x * 0.5 + 0.5) * renderer.domElement.clientWidth;
+            const y = -(vector.y * 0.5 - 0.5) * renderer.domElement.clientHeight;
+            
+            let markerElement = document.getElementById(\`marker-\${markerData.id}\`);
+            if (!markerElement) {
+                markerElement = document.createElement('div');
+                markerElement.className = \`marker \${markerData.type}\`;
+                markerElement.id = \`marker-\${markerData.id}\`;
+                
+                // Set icon
+                let iconClass = 'fas fa-info-circle';
+                if (markerData.type === 'link') iconClass = 'fas fa-link';
+                else if (markerData.type === 'video') iconClass = 'fas fa-video';
+                else if (markerData.type === 'audio') iconClass = 'fas fa-volume-up';
+                
+                markerElement.innerHTML = \`<i class="\${iconClass}"></i>\`;
+                
+                // Add click event
+                markerElement.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    showMarkerInfo(markerData);
+                });
+                
+                markersContainer.appendChild(markerElement);
+            }
+            
+            markerElement.style.left = \`\${x}px\`;
+            markerElement.style.top = \`\${y}px\`;
+        }
+        
+        function showMarkerInfo(marker) {
+            infoTitle.textContent = marker.title;
+            infoDescription.textContent = marker.description;
+            
+            if (marker.link) {
+                infoLink.href = marker.link;
+                infoLink.textContent = marker.link;
+                infoLink.style.display = 'block';
+            } else {
+                infoLink.style.display = 'none';
+            }
+            
+            // Position near the marker
+            const markerElement = document.getElementById(\`marker-\${marker.id}\`);
+            if (markerElement) {
+                const rect = markerElement.getBoundingClientRect();
+                const containerRect = panoramaViewer.getBoundingClientRect();
+                
+                markerInfo.style.left = \`\${rect.left - containerRect.left + 20}px\`;
+                markerInfo.style.top = \`\${rect.top - containerRect.top}px\`;
+            }
+            
+            markerInfo.style.display = 'block';
+        }
+        
+        function hideMarkerInfo() {
+            markerInfo.style.display = 'none';
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Update marker positions
+            markersData.forEach(marker => {
+                const spherical = new THREE.Spherical(500, marker.phi, marker.theta);
+                const position = new THREE.Vector3();
+                position.setFromSpherical(spherical);
+                updateMarkerPosition(marker, position);
+            });
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        function onWindowResize() {
+            camera.aspect = panoramaViewer.clientWidth / panoramaViewer.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(panoramaViewer.clientWidth, panoramaViewer.clientHeight);
+        }
+        
+        // Event listeners
+        closeInfo.addEventListener('click', hideMarkerInfo);
+        
+        // Hide info when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.marker') && !e.target.closest('.marker-info')) {
+                hideMarkerInfo();
+            }
+        });
+        
+        // Initialize
+        init();
+    </script>
+</body>
+</html>`;
+        }
+
         // Update projects list in UI
         function updateProjectsList() {
             const projects = JSON.parse(localStorage.getItem('imageMarkerProjects') || '[]');
@@ -1472,14 +2162,20 @@
                     const img = new Image();
                     img.onload = function() {
                         currentImage = img;
-                        setupCanvas(img);
-                        emptyState.classList.add('hidden');
-                        canvas.classList.remove('hidden');
-                        
-                        markers = project.markers || [];
                         is360Mode = project.is360 || false;
                         toggle360Btn.textContent = is360Mode ? 'Disable 360° View' : 'Enable 360° View';
+                        toggle360Btn.classList.toggle('btn-warning', is360Mode);
+                        toggle360Btn.classList.toggle('btn', !is360Mode);
                         
+                        if (is360Mode) {
+                            setup360Viewer(img);
+                        } else {
+                            setupCanvas(img);
+                        }
+                        
+                        emptyState.classList.add('hidden');
+                        
+                        markers = project.markers || [];
                         selectedMarkerId = null;
                         renderMarkers();
                     };
