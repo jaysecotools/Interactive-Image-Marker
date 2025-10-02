@@ -376,6 +376,23 @@
             color: var(--accent-color);
         }
 
+        .export-options {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: var(--border-radius);
+        }
+
+        .export-option {
+            margin-bottom: 10px;
+        }
+
+        .export-description {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
         @media (max-width: 768px) {
             .app-container {
                 flex-direction: column;
@@ -451,7 +468,18 @@
                     <h3>Project Management</h3>
                     <button id="saveProject" class="btn btn-success">Save Project</button>
                     <button id="loadProject" class="btn">Load Project</button>
-                    <button id="exportProject" class="btn">Export Project</button>
+                    
+                    <div class="export-options">
+                        <h4>Export Options:</h4>
+                        <div class="export-option">
+                            <button id="exportProject" class="btn">Export as JSON</button>
+                            <div class="export-description">For backup or importing back into this app</div>
+                        </div>
+                        <div class="export-option">
+                            <button id="exportHTML" class="btn btn-success">Export as HTML</button>
+                            <div class="export-description">Creates a standalone file you can share with anyone</div>
+                        </div>
+                    </div>
 
                     <div class="saved-projects">
                         <h4>Saved Projects</h4>
@@ -509,6 +537,7 @@
         const saveProjectBtn = document.getElementById('saveProject');
         const loadProjectBtn = document.getElementById('loadProject');
         const exportProjectBtn = document.getElementById('exportProject');
+        const exportHTMLBtn = document.getElementById('exportHTML');
         const markerList = document.getElementById('markerList');
         const projectsList = document.getElementById('projectsList');
         const emptyState = document.getElementById('emptyState');
@@ -528,6 +557,7 @@
         saveProjectBtn.addEventListener('click', saveProject);
         loadProjectBtn.addEventListener('click', loadProject);
         exportProjectBtn.addEventListener('click', exportProject);
+        exportHTMLBtn.addEventListener('click', exportAsHTML);
         closeInfo.addEventListener('click', hideMarkerInfo);
 
         // Marker type selection
@@ -1159,6 +1189,255 @@
             link.href = URL.createObjectURL(dataBlob);
             link.download = `${project.name.replace(/\s+/g, '_')}.json`;
             link.click();
+        }
+
+        // Export project as standalone HTML file
+        function exportAsHTML() {
+            if (!currentImage || markers.length === 0) {
+                alert('Please create a project with markers before exporting.');
+                return;
+            }
+            
+            const projectName = prompt('Enter a name for your exported project:') || 'Interactive Image';
+            
+            // Create the standalone HTML content
+            const htmlContent = createStandaloneHTML(projectName);
+            
+            // Create and download the file
+            const dataBlob = new Blob([htmlContent], {type: 'text/html'});
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `${projectName.replace(/\s+/g, '_')}.html`;
+            link.click();
+            
+            alert('Standalone HTML file created! You can now share this file with anyone - they can open it directly in their browser.');
+        }
+
+        // Create standalone HTML content
+        function createStandaloneHTML(projectName) {
+            return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${projectName}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #4a6fa5;
+            margin-bottom: 20px;
+        }
+        
+        .image-container {
+            position: relative;
+            display: inline-block;
+            max-width: 100%;
+        }
+        
+        #viewerImage {
+            max-width: 100%;
+            max-height: 70vh;
+            display: block;
+            border: 1px solid #eee;
+            border-radius: 8px;
+        }
+        
+        .marker {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s;
+        }
+        
+        .marker:hover {
+            transform: translate(-50%, -50%) scale(1.2);
+        }
+        
+        .marker.info { background-color: #17a2b8; }
+        .marker.link { background-color: #28a745; }
+        .marker.video { background-color: #dc3545; }
+        .marker.audio { background-color: #ffc107; }
+        
+        .marker-info {
+            position: absolute;
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            min-width: 200px;
+            max-width: 300px;
+            z-index: 100;
+            display: none;
+        }
+        
+        .marker-info h4 {
+            margin-bottom: 8px;
+            color: #4a6fa5;
+        }
+        
+        .marker-info p {
+            margin-bottom: 10px;
+        }
+        
+        .marker-info a {
+            color: #4a6fa5;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .marker-info a:hover {
+            text-decoration: underline;
+        }
+        
+        .close-info {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #999;
+        }
+        
+        .instructions {
+            text-align: center;
+            color: #666;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>${projectName}</h1>
+        <div class="image-container">
+            <img id="viewerImage" src="${currentImage.src}" alt="Interactive Image">
+            <div id="markersContainer"></div>
+            <div id="markerInfo" class="marker-info">
+                <span class="close-info">×</span>
+                <h4 id="infoTitle"></h4>
+                <p id="infoDescription"></p>
+                <a id="infoLink" href="#" target="_blank"></a>
+            </div>
+        </div>
+        <p class="instructions">Click on the markers to see more information</p>
+    </div>
+
+    <script>
+        // Marker data
+        const markersData = ${JSON.stringify(markers)};
+        
+        // DOM elements
+        const markersContainer = document.getElementById('markersContainer');
+        const markerInfo = document.getElementById('markerInfo');
+        const infoTitle = document.getElementById('infoTitle');
+        const infoDescription = document.getElementById('infoDescription');
+        const infoLink = document.getElementById('infoLink');
+        const closeInfo = document.querySelector('.close-info');
+        const viewerImage = document.getElementById('viewerImage');
+        
+        // Initialize markers when image loads
+        viewerImage.onload = function() {
+            createMarkers();
+        };
+        
+        // If image already loaded, create markers immediately
+        if (viewerImage.complete) {
+            createMarkers();
+        }
+        
+        function createMarkers() {
+            markersData.forEach(marker => {
+                const markerElement = document.createElement('div');
+                markerElement.className = \`marker \${marker.type}\`;
+                markerElement.style.left = \`\${marker.x}px\`;
+                markerElement.style.top = \`\${marker.y}px\`;
+                
+                // Set icon based on marker type
+                let iconClass = 'fas fa-info-circle';
+                if (marker.type === 'link') iconClass = 'fas fa-link';
+                else if (marker.type === 'video') iconClass = 'fas fa-video';
+                else if (marker.type === 'audio') iconClass = 'fas fa-volume-up';
+                
+                markerElement.innerHTML = \`<i class="\${iconClass}"></i>\`;
+                
+                // Add click event
+                markerElement.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    showMarkerInfo(marker);
+                });
+                
+                markersContainer.appendChild(markerElement);
+            });
+        }
+        
+        function showMarkerInfo(marker) {
+            infoTitle.textContent = marker.title;
+            infoDescription.textContent = marker.description;
+            
+            if (marker.link) {
+                infoLink.href = marker.link;
+                infoLink.textContent = marker.link;
+                infoLink.style.display = 'block';
+            } else {
+                infoLink.style.display = 'none';
+            }
+            
+            // Position near the marker
+            markerInfo.style.left = \`\${marker.x + 20}px\`;
+            markerInfo.style.top = \`\${marker.y}px\`;
+            markerInfo.style.display = 'block';
+        }
+        
+        function hideMarkerInfo() {
+            markerInfo.style.display = 'none';
+        }
+        
+        // Event listeners
+        closeInfo.addEventListener('click', hideMarkerInfo);
+        
+        // Hide info when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.marker') && !e.target.closest('.marker-info')) {
+                hideMarkerInfo();
+            }
+        });
+    </script>
+</body>
+</html>`;
         }
 
         // Update projects list in UI
