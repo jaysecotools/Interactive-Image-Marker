@@ -162,11 +162,23 @@
             cursor: pointer;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 10px;
         }
 
         .marker-item:hover {
             background: #e9ecef;
+        }
+
+        .marker-item.selected {
+            background: #d1ecf1;
+        }
+
+        .marker-item-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
         }
 
         .marker-item-icon {
@@ -184,6 +196,23 @@
         .marker-item-icon.link { background: #28a745; }
         .marker-item-icon.video { background: #dc3545; }
         .marker-item-icon.audio { background: #ffc107; }
+
+        .marker-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .marker-action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .marker-action-btn:hover {
+            color: #495057;
+        }
 
         .image-container {
             width: 100%;
@@ -222,10 +251,16 @@
             font-size: 14px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
             transition: transform 0.2s;
+            z-index: 10;
         }
 
         .marker:hover {
             transform: translate(-50%, -50%) scale(1.2);
+        }
+
+        .marker.selected {
+            border: 3px solid white;
+            box-shadow: 0 0 0 2px #4a6fa5;
         }
 
         .marker.info { background: #17a2b8; }
@@ -377,6 +412,9 @@
                     <button id="saveMarker" class="btn btn-primary">
                         <i class="fas fa-save"></i> Save Marker
                     </button>
+                    <button id="deleteMarker" class="btn btn-danger" style="display: none;">
+                        <i class="fas fa-trash"></i> Delete Marker
+                    </button>
                 </div>
 
                 <div class="section">
@@ -451,6 +489,7 @@
         const videoField = document.querySelector('.video-field');
         const audioField = document.querySelector('.audio-field');
         const saveMarker = document.getElementById('saveMarker');
+        const deleteMarker = document.getElementById('deleteMarker');
         const clearMarkers = document.getElementById('clearMarkers');
         const markerList = document.getElementById('markerList');
         const saveProject = document.getElementById('saveProject');
@@ -484,6 +523,7 @@
             });
 
             saveMarker.addEventListener('click', saveMarkerHandler);
+            deleteMarker.addEventListener('click', deleteMarkerHandler);
             clearMarkers.addEventListener('click', clearMarkersHandler);
             saveProject.addEventListener('click', saveProjectHandler);
             loadProject.addEventListener('click', loadProjectHandler);
@@ -567,6 +607,9 @@
             markerLink.value = '';
             markerVideo.value = '';
             markerAudio.value = '';
+            
+            // Reset to add mode
+            resetForm();
         }
 
         function renderMarker(marker) {
@@ -588,6 +631,7 @@
 
             markerElement.addEventListener('click', (e) => {
                 e.stopPropagation();
+                selectMarker(marker.id);
                 showMarkerInfo(marker);
             });
 
@@ -608,6 +652,24 @@
                 
                 renderMarker(marker);
             });
+        }
+
+        function selectMarker(markerId) {
+            // Deselect all markers
+            document.querySelectorAll('.marker').forEach(m => m.classList.remove('selected'));
+            document.querySelectorAll('.marker-item').forEach(m => m.classList.remove('selected'));
+            
+            // Select the clicked marker
+            const markerElement = document.querySelector(`.marker[data-id="${markerId}"]`);
+            const markerItem = document.querySelector(`.marker-item[data-id="${markerId}"]`);
+            
+            if (markerElement) markerElement.classList.add('selected');
+            if (markerItem) markerItem.classList.add('selected');
+            
+            selectedMarkerId = markerId;
+            
+            // Show delete button
+            deleteMarker.style.display = 'inline-block';
         }
 
         function showMarkerInfo(marker) {
@@ -633,8 +695,24 @@
                 popupMedia.appendChild(audioElement);
             }
 
-            markerPopup.style.left = (marker.displayX + 20) + 'px';
-            markerPopup.style.top = (marker.displayY - 20) + 'px';
+            // Position popup with boundary checking
+            const popupWidth = markerPopup.offsetWidth;
+            const popupHeight = markerPopup.offsetHeight;
+            const containerRect = imageContainer.getBoundingClientRect();
+            
+            let left = marker.displayX + 20;
+            let top = marker.displayY - 20;
+            
+            // Check if popup would go outside container
+            if (left + popupWidth > containerRect.width) {
+                left = marker.displayX - popupWidth - 20;
+            }
+            if (top + popupHeight > containerRect.height) {
+                top = marker.displayY - popupHeight + 20;
+            }
+            
+            markerPopup.style.left = left + 'px';
+            markerPopup.style.top = top + 'px';
             markerPopup.style.display = 'block';
         }
 
@@ -708,7 +786,18 @@
                     alert('Marker updated!');
                 }
             } else {
-                alert('Please select a marker first by clicking on it');
+                alert('Click on the image to add a marker first');
+            }
+        }
+
+        function deleteMarkerHandler() {
+            if (selectedMarkerId && confirm('Delete this marker?')) {
+                markers = markers.filter(m => m.id !== selectedMarkerId);
+                document.querySelector(`.marker[data-id="${selectedMarkerId}"]`).remove();
+                updateMarkerList();
+                hidePopup();
+                resetForm();
+                selectedMarkerId = null;
             }
         }
 
@@ -718,6 +807,7 @@
                 document.querySelectorAll('.marker').forEach(m => m.remove());
                 updateMarkerList();
                 hidePopup();
+                resetForm();
             }
         }
 
@@ -736,8 +826,14 @@
                 else if (marker.type === 'audio') icon = '<i class="fas fa-volume-up"></i>';
 
                 html += '<div class="marker-item" data-id="' + marker.id + '">' +
-                    '<div class="marker-item-icon ' + marker.type + '">' + icon + '</div>' +
-                    '<div><strong>' + marker.title + '</strong><br><small>' + marker.type + '</small></div>' +
+                    '<div class="marker-item-content">' +
+                        '<div class="marker-item-icon ' + marker.type + '">' + icon + '</div>' +
+                        '<div><strong>' + marker.title + '</strong><br><small>' + marker.type + '</small></div>' +
+                    '</div>' +
+                    '<div class="marker-actions">' +
+                        '<button class="marker-action-btn edit-marker" title="Edit"><i class="fas fa-edit"></i></button>' +
+                        '<button class="marker-action-btn delete-marker" title="Delete"><i class="fas fa-trash"></i></button>' +
+                    '</div>' +
                 '</div>';
             });
 
@@ -745,24 +841,46 @@
 
             // Add click events to marker items
             markerList.querySelectorAll('.marker-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    const markerId = parseInt(item.dataset.id);
-                    const marker = markers.find(m => m.id === markerId);
-                    if (marker) {
-                        selectedMarkerId = markerId;
-                        markerTitle.value = marker.title;
-                        markerDescription.value = marker.description;
-                        markerLink.value = marker.link;
-                        markerVideo.value = marker.video;
-                        markerAudio.value = marker.audio;
-                        
-                        // Set the correct marker type active
-                        markerTypes.forEach(t => t.classList.remove('active'));
-                        document.querySelector('.marker-type[data-type="' + marker.type + '"]').classList.add('active');
-                        currentMarkerType = marker.type;
-                        updateFieldsVisibility();
-                        
+                const markerId = parseInt(item.dataset.id);
+                const marker = markers.find(m => m.id === markerId);
+                
+                // Click on item selects marker
+                item.addEventListener('click', (e) => {
+                    if (!e.target.closest('.marker-actions')) {
+                        selectMarker(markerId);
                         showMarkerInfo(marker);
+                    }
+                });
+                
+                // Edit button
+                item.querySelector('.edit-marker').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    selectMarker(markerId);
+                    
+                    // Populate form with marker data
+                    markerTitle.value = marker.title;
+                    markerDescription.value = marker.description;
+                    markerLink.value = marker.link;
+                    markerVideo.value = marker.video;
+                    markerAudio.value = marker.audio;
+                    
+                    // Set the correct marker type active
+                    markerTypes.forEach(t => t.classList.remove('active'));
+                    document.querySelector('.marker-type[data-type="' + marker.type + '"]').classList.add('active');
+                    currentMarkerType = marker.type;
+                    updateFieldsVisibility();
+                });
+                
+                // Delete button
+                item.querySelector('.delete-marker').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    markers = markers.filter(m => m.id !== markerId);
+                    document.querySelector(`.marker[data-id="${markerId}"]`).remove();
+                    updateMarkerList();
+                    if (selectedMarkerId === markerId) {
+                        hidePopup();
+                        resetForm();
+                        selectedMarkerId = null;
                     }
                 });
             });
@@ -782,6 +900,26 @@
             } else if (currentMarkerType === 'audio') {
                 audioField.style.display = 'block';
             }
+        }
+
+        function resetForm() {
+            markerTitle.value = '';
+            markerDescription.value = '';
+            markerLink.value = '';
+            markerVideo.value = '';
+            markerAudio.value = '';
+            deleteMarker.style.display = 'none';
+            selectedMarkerId = null;
+            
+            // Deselect all markers
+            document.querySelectorAll('.marker').forEach(m => m.classList.remove('selected'));
+            document.querySelectorAll('.marker-item').forEach(m => m.classList.remove('selected'));
+            
+            // Reset to info marker type
+            markerTypes.forEach(t => t.classList.remove('active'));
+            document.querySelector('.marker-type[data-type="info"]').classList.add('active');
+            currentMarkerType = 'info';
+            updateFieldsVisibility();
         }
 
         function saveProjectHandler() {
@@ -829,6 +967,7 @@
                 setTimeout(() => {
                     renderAllMarkers();
                     updateMarkerList();
+                    resetForm();
                     alert('Project loaded!');
                 }, 100);
             } else {
