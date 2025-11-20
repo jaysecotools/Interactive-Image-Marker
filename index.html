@@ -248,7 +248,7 @@
 
         .popup-header {
             display: flex;
-            justify-content: between;
+            justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
         }
@@ -303,7 +303,7 @@
             display: none;
         }
 
-        .media-field {
+        input[type="file"] {
             display: none;
         }
     </style>
@@ -311,7 +311,7 @@
 <body>
     <div class="container">
         <header>
-            <h1>Interactive Image Marker</h1>
+            <h1><i class="fas fa-map-marker-alt"></i> Interactive Image Marker</h1>
             <p>Add markers to your images with information, links, and media</p>
         </header>
 
@@ -323,7 +323,7 @@
                         <i class="fas fa-cloud-upload-alt" style="font-size: 24px; margin-bottom: 10px;"></i>
                         <div>Click to upload image</div>
                     </div>
-                    <input type="file" id="imageUpload" accept="image/*" class="hidden">
+                    <input type="file" id="imageUpload" accept="image/*">
                 </div>
 
                 <div class="section">
@@ -413,7 +413,7 @@
                     <div class="marker-popup" id="markerPopup">
                         <div class="popup-header">
                             <h4 class="popup-title" id="popupTitle"></h4>
-                            <button class="popup-close" onclick="hidePopup()">
+                            <button class="popup-close" id="closePopup">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
@@ -434,65 +434,63 @@
         let currentMarkerType = 'info';
         let selectedMarkerId = null;
         let currentImage = null;
-        let imageScale = 1;
-        let imageOffset = { x: 0, y: 0 };
 
         // DOM elements
-        const elements = {
-            fileInput: document.getElementById('fileInput'),
-            imageUpload: document.getElementById('imageUpload'),
-            imageDisplay: document.getElementById('imageDisplay'),
-            imageContainer: document.getElementById('imageContainer'),
-            emptyState: document.getElementById('emptyState'),
-            markerTypes: document.querySelectorAll('.marker-type'),
-            markerTitle: document.getElementById('markerTitle'),
-            markerDescription: document.getElementById('markerDescription'),
-            markerLink: document.getElementById('markerLink'),
-            markerVideo: document.getElementById('markerVideo'),
-            markerAudio: document.getElementById('markerAudio'),
-            linkField: document.querySelector('.link-field'),
-            videoField: document.querySelector('.video-field'),
-            audioField: document.querySelector('.audio-field'),
-            saveMarker: document.getElementById('saveMarker'),
-            clearMarkers: document.getElementById('clearMarkers'),
-            markerList: document.getElementById('markerList'),
-            saveProject: document.getElementById('saveProject'),
-            loadProject: document.getElementById('loadProject'),
-            exportHTML: document.getElementById('exportHTML'),
-            markerPopup: document.getElementById('markerPopup'),
-            popupTitle: document.getElementById('popupTitle'),
-            popupDescription: document.getElementById('popupDescription'),
-            popupLink: document.getElementById('popupLink'),
-            popupMedia: document.getElementById('popupMedia')
-        };
+        const fileInput = document.getElementById('fileInput');
+        const imageUpload = document.getElementById('imageUpload');
+        const imageDisplay = document.getElementById('imageDisplay');
+        const imageContainer = document.getElementById('imageContainer');
+        const emptyState = document.getElementById('emptyState');
+        const markerTypes = document.querySelectorAll('.marker-type');
+        const markerTitle = document.getElementById('markerTitle');
+        const markerDescription = document.getElementById('markerDescription');
+        const markerLink = document.getElementById('markerLink');
+        const markerVideo = document.getElementById('markerVideo');
+        const markerAudio = document.getElementById('markerAudio');
+        const linkField = document.querySelector('.link-field');
+        const videoField = document.querySelector('.video-field');
+        const audioField = document.querySelector('.audio-field');
+        const saveMarker = document.getElementById('saveMarker');
+        const clearMarkers = document.getElementById('clearMarkers');
+        const markerList = document.getElementById('markerList');
+        const saveProject = document.getElementById('saveProject');
+        const loadProject = document.getElementById('loadProject');
+        const exportHTML = document.getElementById('exportHTML');
+        const markerPopup = document.getElementById('markerPopup');
+        const popupTitle = document.getElementById('popupTitle');
+        const popupDescription = document.getElementById('popupDescription');
+        const popupLink = document.getElementById('popupLink');
+        const popupMedia = document.getElementById('popupMedia');
+        const closePopup = document.getElementById('closePopup');
 
         // Initialize app
         function init() {
             console.log('App initialized');
             
             // Event listeners
-            elements.fileInput.addEventListener('click', () => {
-                elements.imageUpload.click();
+            fileInput.addEventListener('click', () => {
+                imageUpload.click();
             });
 
-            elements.imageUpload.addEventListener('change', handleImageUpload);
+            imageUpload.addEventListener('change', handleImageUpload);
 
-            elements.markerTypes.forEach(type => {
+            markerTypes.forEach(type => {
                 type.addEventListener('click', () => {
-                    elements.markerTypes.forEach(t => t.classList.remove('active'));
+                    markerTypes.forEach(t => t.classList.remove('active'));
                     type.classList.add('active');
                     currentMarkerType = type.dataset.type;
                     updateFieldsVisibility();
                 });
             });
 
-            elements.saveMarker.addEventListener('click', saveMarker);
-            elements.clearMarkers.addEventListener('click', clearMarkers);
-            elements.saveProject.addEventListener('click', saveProject);
-            elements.loadProject.addEventListener('click', loadProject);
-            elements.exportHTML.addEventListener('click', exportHTML);
+            saveMarker.addEventListener('click', saveMarkerHandler);
+            clearMarkers.addEventListener('click', clearMarkersHandler);
+            saveProject.addEventListener('click', saveProjectHandler);
+            loadProject.addEventListener('click', loadProjectHandler);
+            exportHTML.addEventListener('click', exportHTMLHandler);
+            closePopup.addEventListener('click', hidePopup);
 
-            elements.imageDisplay.addEventListener('click', addMarker);
+            imageDisplay.addEventListener('click', addMarker);
 
             updateFieldsVisibility();
         }
@@ -511,12 +509,9 @@
                         height: img.height
                     };
                     
-                    elements.imageDisplay.src = currentImage.src;
-                    elements.imageDisplay.style.display = 'block';
-                    elements.emptyState.style.display = 'none';
-                    
-                    // Calculate image position and scale
-                    calculateImagePosition();
+                    imageDisplay.src = currentImage.src;
+                    imageDisplay.style.display = 'block';
+                    emptyState.style.display = 'none';
                     
                     markers = [];
                     updateMarkerList();
@@ -527,27 +522,14 @@
             reader.readAsDataURL(file);
         }
 
-        function calculateImagePosition() {
-            const container = elements.imageContainer;
-            const img = elements.imageDisplay;
-            
-            const containerRect = container.getBoundingClientRect();
-            const imgRect = img.getBoundingClientRect();
-            
-            // Calculate how the image is positioned within the container
-            imageOffset.x = imgRect.left - containerRect.left;
-            imageOffset.y = imgRect.top - containerRect.top;
-            imageScale = imgRect.width / img.naturalWidth;
-        }
-
         function addMarker(event) {
             if (!currentImage) {
                 alert('Please upload an image first!');
                 return;
             }
 
-            const containerRect = elements.imageContainer.getBoundingClientRect();
-            const imgRect = elements.imageDisplay.getBoundingClientRect();
+            const containerRect = imageContainer.getBoundingClientRect();
+            const imgRect = imageDisplay.getBoundingClientRect();
             
             // Calculate click position relative to the actual image
             const clickX = event.clientX - imgRect.left;
@@ -564,15 +546,15 @@
             const marker = {
                 id: Date.now(),
                 type: currentMarkerType,
-                x: imageX, // Store as percentage for responsive positioning
+                x: imageX,
                 y: imageY,
-                displayX: displayX, // Store absolute position for current display
+                displayX: displayX,
                 displayY: displayY,
-                title: elements.markerTitle.value || 'New Marker',
-                description: elements.markerDescription.value || '',
-                link: elements.markerLink.value || '',
-                video: elements.markerVideo.value || '',
-                audio: elements.markerAudio.value || ''
+                title: markerTitle.value || 'New Marker',
+                description: markerDescription.value || '',
+                link: markerLink.value || '',
+                video: markerVideo.value || '',
+                audio: markerAudio.value || ''
             };
 
             markers.push(marker);
@@ -580,18 +562,17 @@
             updateMarkerList();
 
             // Clear form
-            elements.markerTitle.value = '';
-            elements.markerDescription.value = '';
-            elements.markerLink.value = '';
-            elements.markerVideo.value = '';
-            elements.markerAudio.value = '';
+            markerTitle.value = '';
+            markerDescription.value = '';
+            markerLink.value = '';
+            markerVideo.value = '';
+            markerAudio.value = '';
         }
 
         function renderMarker(marker) {
             const markerElement = document.createElement('div');
             markerElement.className = 'marker ' + marker.type;
             
-            // Position marker using the stored display coordinates
             markerElement.style.left = marker.displayX + 'px';
             markerElement.style.top = marker.displayY + 'px';
             markerElement.dataset.id = marker.id;
@@ -610,7 +591,7 @@
                 showMarkerInfo(marker);
             });
 
-            elements.imageContainer.appendChild(markerElement);
+            imageContainer.appendChild(markerElement);
         }
 
         function renderAllMarkers() {
@@ -619,10 +600,9 @@
             
             // Recalculate display positions for all markers
             markers.forEach(marker => {
-                const imgRect = elements.imageDisplay.getBoundingClientRect();
-                const containerRect = elements.imageContainer.getBoundingClientRect();
+                const imgRect = imageDisplay.getBoundingClientRect();
+                const containerRect = imageContainer.getBoundingClientRect();
                 
-                // Convert percentage back to current display coordinates
                 marker.displayX = (marker.x / 100) * imgRect.width + (imgRect.left - containerRect.left);
                 marker.displayY = (marker.y / 100) * imgRect.height + (imgRect.top - containerRect.top);
                 
@@ -631,36 +611,35 @@
         }
 
         function showMarkerInfo(marker) {
-            elements.popupTitle.textContent = marker.title;
-            elements.popupDescription.textContent = marker.description;
+            popupTitle.textContent = marker.title;
+            popupDescription.textContent = marker.description;
             
             // Clear previous media
-            elements.popupMedia.innerHTML = '';
-            elements.popupLink.style.display = 'none';
+            popupMedia.innerHTML = '';
+            popupLink.style.display = 'none';
             
             // Show appropriate content based on marker type
             if (marker.type === 'link' && marker.link) {
-                elements.popupLink.href = marker.link;
-                elements.popupLink.textContent = marker.link;
-                elements.popupLink.style.display = 'block';
+                popupLink.href = marker.link;
+                popupLink.textContent = marker.link;
+                popupLink.style.display = 'block';
             }
             else if (marker.type === 'video' && marker.video) {
                 const videoElement = createMediaElement(marker.video, 'video');
-                elements.popupMedia.appendChild(videoElement);
+                popupMedia.appendChild(videoElement);
             }
             else if (marker.type === 'audio' && marker.audio) {
                 const audioElement = createMediaElement(marker.audio, 'audio');
-                elements.popupMedia.appendChild(audioElement);
+                popupMedia.appendChild(audioElement);
             }
 
-            elements.markerPopup.style.left = (marker.displayX + 20) + 'px';
-            elements.markerPopup.style.top = (marker.displayY - 20) + 'px';
-            elements.markerPopup.style.display = 'block';
+            markerPopup.style.left = (marker.displayX + 20) + 'px';
+            markerPopup.style.top = (marker.displayY - 20) + 'px';
+            markerPopup.style.display = 'block';
         }
 
         function createMediaElement(url, type) {
             if (type === 'video') {
-                // Check if it's a YouTube or Vimeo URL
                 if (url.includes('youtube.com') || url.includes('youtu.be') || url.includes('vimeo.com')) {
                     const embedUrl = getEmbedUrl(url);
                     const iframe = document.createElement('iframe');
@@ -672,7 +651,6 @@
                     iframe.allowFullscreen = true;
                     return iframe;
                 } else {
-                    // Direct video file
                     const video = document.createElement('video');
                     video.src = url;
                     video.controls = true;
@@ -700,30 +678,30 @@
                 } else if (url.includes('youtu.be')) {
                     videoId = url.split('/').pop().split('?')[0];
                 }
-                return `https://www.youtube.com/embed/${videoId}`;
+                return 'https://www.youtube.com/embed/' + videoId;
             }
             // Vimeo embed
             else if (url.includes('vimeo.com')) {
                 const videoId = url.split('/').pop();
-                return `https://player.vimeo.com/video/${videoId}`;
+                return 'https://player.vimeo.com/video/' + videoId;
             }
             return url;
         }
 
         function hidePopup() {
-            elements.markerPopup.style.display = 'none';
+            markerPopup.style.display = 'none';
         }
 
-        function saveMarker() {
+        function saveMarkerHandler() {
             if (selectedMarkerId) {
                 // Update existing marker
                 const marker = markers.find(m => m.id === selectedMarkerId);
                 if (marker) {
-                    marker.title = elements.markerTitle.value;
-                    marker.description = elements.markerDescription.value;
-                    marker.link = elements.markerLink.value;
-                    marker.video = elements.markerVideo.value;
-                    marker.audio = elements.markerAudio.value;
+                    marker.title = markerTitle.value;
+                    marker.description = markerDescription.value;
+                    marker.link = markerLink.value;
+                    marker.video = markerVideo.value;
+                    marker.audio = markerAudio.value;
                     marker.type = currentMarkerType;
                     updateMarkerList();
                     renderAllMarkers();
@@ -734,7 +712,7 @@
             }
         }
 
-        function clearMarkers() {
+        function clearMarkersHandler() {
             if (confirm('Clear all markers?')) {
                 markers = [];
                 document.querySelectorAll('.marker').forEach(m => m.remove());
@@ -745,7 +723,7 @@
 
         function updateMarkerList() {
             if (markers.length === 0) {
-                elements.markerList.innerHTML = '<div class="empty-state">No markers added</div>';
+                markerList.innerHTML = '<div class="empty-state">No markers added</div>';
                 return;
             }
 
@@ -757,33 +735,30 @@
                 else if (marker.type === 'video') icon = '<i class="fas fa-video"></i>';
                 else if (marker.type === 'audio') icon = '<i class="fas fa-volume-up"></i>';
 
-                html += `<div class="marker-item" data-id="${marker.id}">
-                    <div class="marker-item-icon ${marker.type}">${icon}</div>
-                    <div>
-                        <strong>${marker.title}</strong><br>
-                        <small>${marker.type}</small>
-                    </div>
-                </div>`;
+                html += '<div class="marker-item" data-id="' + marker.id + '">' +
+                    '<div class="marker-item-icon ' + marker.type + '">' + icon + '</div>' +
+                    '<div><strong>' + marker.title + '</strong><br><small>' + marker.type + '</small></div>' +
+                '</div>';
             });
 
-            elements.markerList.innerHTML = html;
+            markerList.innerHTML = html;
 
             // Add click events to marker items
-            elements.markerList.querySelectorAll('.marker-item').forEach(item => {
+            markerList.querySelectorAll('.marker-item').forEach(item => {
                 item.addEventListener('click', () => {
                     const markerId = parseInt(item.dataset.id);
                     const marker = markers.find(m => m.id === markerId);
                     if (marker) {
                         selectedMarkerId = markerId;
-                        elements.markerTitle.value = marker.title;
-                        elements.markerDescription.value = marker.description;
-                        elements.markerLink.value = marker.link;
-                        elements.markerVideo.value = marker.video;
-                        elements.markerAudio.value = marker.audio;
+                        markerTitle.value = marker.title;
+                        markerDescription.value = marker.description;
+                        markerLink.value = marker.link;
+                        markerVideo.value = marker.video;
+                        markerAudio.value = marker.audio;
                         
                         // Set the correct marker type active
-                        elements.markerTypes.forEach(t => t.classList.remove('active'));
-                        document.querySelector(`.marker-type[data-type="${marker.type}"]`).classList.add('active');
+                        markerTypes.forEach(t => t.classList.remove('active'));
+                        document.querySelector('.marker-type[data-type="' + marker.type + '"]').classList.add('active');
                         currentMarkerType = marker.type;
                         updateFieldsVisibility();
                         
@@ -795,21 +770,21 @@
 
         function updateFieldsVisibility() {
             // Hide all fields first
-            elements.linkField.style.display = 'none';
-            elements.videoField.style.display = 'none';
-            elements.audioField.style.display = 'none';
+            linkField.style.display = 'none';
+            videoField.style.display = 'none';
+            audioField.style.display = 'none';
             
             // Show only the relevant field
             if (currentMarkerType === 'link') {
-                elements.linkField.style.display = 'block';
+                linkField.style.display = 'block';
             } else if (currentMarkerType === 'video') {
-                elements.videoField.style.display = 'block';
+                videoField.style.display = 'block';
             } else if (currentMarkerType === 'audio') {
-                elements.audioField.style.display = 'block';
+                audioField.style.display = 'block';
             }
         }
 
-        function saveProject() {
+        function saveProjectHandler() {
             if (!currentImage) {
                 alert('Please upload an image first');
                 return;
@@ -831,7 +806,7 @@
             alert('Project saved!');
         }
 
-        function loadProject() {
+        function loadProjectHandler() {
             const projects = JSON.parse(localStorage.getItem('projects') || '[]');
             if (projects.length === 0) {
                 alert('No saved projects');
@@ -846,13 +821,12 @@
                 currentImage = project.image;
                 markers = project.markers || [];
                 
-                elements.imageDisplay.src = currentImage.src;
-                elements.imageDisplay.style.display = 'block';
-                elements.emptyState.style.display = 'none';
+                imageDisplay.src = currentImage.src;
+                imageDisplay.style.display = 'block';
+                emptyState.style.display = 'none';
                 
                 // Recalculate image position
                 setTimeout(() => {
-                    calculateImagePosition();
                     renderAllMarkers();
                     updateMarkerList();
                     alert('Project loaded!');
@@ -862,7 +836,7 @@
             }
         }
 
-        function exportHTML() {
+        function exportHTMLHandler() {
             if (!currentImage || markers.length === 0) {
                 alert('Please create a project with markers first');
                 return;
@@ -870,7 +844,19 @@
 
             const projectName = prompt('Project name for export:') || 'Interactive Image';
             
-            const html = `<!DOCTYPE html>
+            const html = createExportHTML(projectName);
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = projectName.replace(/ /g, '_') + '.html';
+            a.click();
+            
+            alert('HTML file exported!');
+        }
+
+        function createExportHTML(projectName) {
+            return `<!DOCTYPE html>
 <html>
 <head>
     <title>${projectName}</title>
@@ -963,10 +949,10 @@
                 } else if (url.includes('youtu.be')) {
                     videoId = url.split('/').pop().split('?')[0];
                 }
-                return \\`https://www.youtube.com/embed/\\${videoId}\\`;
+                return 'https://www.youtube.com/embed/' + videoId;
             } else if (url.includes('vimeo.com')) {
                 const videoId = url.split('/').pop();
-                return \\`https://player.vimeo.com/video/\\${videoId}\\`;
+                return 'https://player.vimeo.com/video/' + videoId;
             }
             return url;
         }
@@ -977,7 +963,6 @@
                 const m = document.createElement('div');
                 m.className = 'marker ' + marker.type;
                 
-                // Convert percentage coordinates to current image size
                 const x = (marker.x / 100) * imgRect.width;
                 const y = (marker.y / 100) * imgRect.height;
                 
@@ -1036,21 +1021,11 @@
     <\/script>
 </body>
 </html>`;
-
-            const blob = new Blob([html], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = projectName.replace(/ /g, '_') + '.html';
-            a.click();
-            
-            alert('HTML file exported!');
         }
 
         // Handle window resize to reposition markers
         window.addEventListener('resize', function() {
             if (currentImage) {
-                calculateImagePosition();
                 renderAllMarkers();
             }
         });
