@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive Image Marker</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
             margin: 0;
@@ -109,12 +110,20 @@
             border-radius: 5px;
             text-align: center;
             cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
         }
 
         .marker-type.active {
             border-color: #4a6fa5;
             background: #4a6fa5;
             color: white;
+        }
+
+        .marker-type i {
+            font-size: 18px;
         }
 
         .form-group {
@@ -151,11 +160,30 @@
             padding: 8px;
             border-bottom: 1px solid #dee2e6;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .marker-item:hover {
             background: #e9ecef;
         }
+
+        .marker-item-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 10px;
+        }
+
+        .marker-item-icon.info { background: #17a2b8; }
+        .marker-item-icon.link { background: #28a745; }
+        .marker-item-icon.video { background: #dc3545; }
+        .marker-item-icon.audio { background: #ffc107; }
 
         .image-container {
             width: 100%;
@@ -182,8 +210,8 @@
 
         .marker {
             position: absolute;
-            width: 24px;
-            height: 24px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             cursor: pointer;
             transform: translate(-50%, -50%);
@@ -191,8 +219,13 @@
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 12px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            font-size: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+        }
+
+        .marker:hover {
+            transform: translate(-50%, -50%) scale(1.2);
         }
 
         .marker.info { background: #17a2b8; }
@@ -204,15 +237,73 @@
             position: absolute;
             background: white;
             border: 1px solid #dee2e6;
-            border-radius: 5px;
-            padding: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
             display: none;
             z-index: 100;
-            max-width: 300px;
+            max-width: 350px;
+            min-width: 250px;
+        }
+
+        .popup-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .popup-title {
+            color: #4a6fa5;
+            margin: 0;
+            flex: 1;
+        }
+
+        .popup-close {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #6c757d;
+        }
+
+        .popup-content {
+            margin-bottom: 15px;
+        }
+
+        .popup-description {
+            color: #495057;
+            line-height: 1.4;
+            margin-bottom: 10px;
+        }
+
+        .popup-link {
+            display: block;
+            color: #4a6fa5;
+            text-decoration: none;
+            margin-bottom: 10px;
+            word-break: break-all;
+        }
+
+        .popup-link:hover {
+            text-decoration: underline;
+        }
+
+        .popup-media {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .popup-video, .popup-audio {
+            width: 100%;
+            border-radius: 4px;
         }
 
         .hidden {
+            display: none;
+        }
+
+        .media-field {
             display: none;
         }
     </style>
@@ -221,26 +312,39 @@
     <div class="container">
         <header>
             <h1>Interactive Image Marker</h1>
-            <p>Add markers to your images with information and links</p>
+            <p>Add markers to your images with information, links, and media</p>
         </header>
 
         <div class="app-container">
             <div class="sidebar">
                 <div class="section">
-                    <h3>Upload Image</h3>
+                    <h3><i class="fas fa-upload"></i> Upload Image</h3>
                     <div class="file-input" id="fileInput">
-                        Click to upload image
+                        <i class="fas fa-cloud-upload-alt" style="font-size: 24px; margin-bottom: 10px;"></i>
+                        <div>Click to upload image</div>
                     </div>
                     <input type="file" id="imageUpload" accept="image/*" class="hidden">
                 </div>
 
                 <div class="section">
-                    <h3>Add Marker</h3>
+                    <h3><i class="fas fa-map-pin"></i> Add Marker</h3>
                     <div class="marker-types">
-                        <div class="marker-type active" data-type="info">Info</div>
-                        <div class="marker-type" data-type="link">Link</div>
-                        <div class="marker-type" data-type="video">Video</div>
-                        <div class="marker-type" data-type="audio">Audio</div>
+                        <div class="marker-type active" data-type="info">
+                            <i class="fas fa-info-circle"></i>
+                            <div>Info</div>
+                        </div>
+                        <div class="marker-type" data-type="link">
+                            <i class="fas fa-link"></i>
+                            <div>Link</div>
+                        </div>
+                        <div class="marker-type" data-type="video">
+                            <i class="fas fa-video"></i>
+                            <div>Video</div>
+                        </div>
+                        <div class="marker-type" data-type="audio">
+                            <i class="fas fa-volume-up"></i>
+                            <div>Audio</div>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -253,41 +357,71 @@
                         <textarea id="markerDescription" class="form-control" placeholder="Marker description"></textarea>
                     </div>
 
-                    <div class="form-group" id="linkField">
+                    <div class="form-group link-field">
                         <label>Link URL</label>
                         <input type="url" id="markerLink" class="form-control" placeholder="https://example.com">
                     </div>
 
-                    <button id="saveMarker" class="btn btn-primary">Save Marker</button>
+                    <div class="form-group video-field">
+                        <label>Video URL</label>
+                        <input type="url" id="markerVideo" class="form-control" placeholder="https://youtube.com/watch?v=...">
+                        <small style="color: #666; font-size: 12px;">Supports YouTube, Vimeo, and direct video links</small>
+                    </div>
+
+                    <div class="form-group audio-field">
+                        <label>Audio URL</label>
+                        <input type="url" id="markerAudio" class="form-control" placeholder="https://example.com/audio.mp3">
+                        <small style="color: #666; font-size: 12px;">Supports MP3, WAV, and other audio formats</small>
+                    </div>
+
+                    <button id="saveMarker" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Marker
+                    </button>
                 </div>
 
                 <div class="section">
-                    <h3>Markers</h3>
+                    <h3><i class="fas fa-list"></i> Markers</h3>
                     <div class="marker-list" id="markerList">
                         <div class="empty-state">No markers added</div>
                     </div>
-                    <button id="clearMarkers" class="btn btn-danger">Clear All</button>
+                    <button id="clearMarkers" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Clear All
+                    </button>
                 </div>
 
                 <div class="section">
-                    <h3>Projects</h3>
-                    <button id="saveProject" class="btn btn-success">Save Project</button>
-                    <button id="loadProject" class="btn btn-primary">Load Project</button>
-                    <button id="exportHTML" class="btn btn-primary">Export HTML</button>
+                    <h3><i class="fas fa-project-diagram"></i> Projects</h3>
+                    <button id="saveProject" class="btn btn-success">
+                        <i class="fas fa-save"></i> Save Project
+                    </button>
+                    <button id="loadProject" class="btn btn-primary">
+                        <i class="fas fa-folder-open"></i> Load Project
+                    </button>
+                    <button id="exportHTML" class="btn btn-primary">
+                        <i class="fas fa-file-export"></i> Export HTML
+                    </button>
                 </div>
             </div>
 
             <div class="main-content">
                 <div class="image-container" id="imageContainer">
                     <div class="empty-state" id="emptyState">
-                        Upload an image to get started
+                        <i class="fas fa-image" style="font-size: 48px; margin-bottom: 20px; color: #dee2e6;"></i>
+                        <div>Upload an image to get started</div>
                     </div>
                     <img id="imageDisplay" alt="Uploaded image">
                     <div class="marker-popup" id="markerPopup">
-                        <h4 id="popupTitle"></h4>
-                        <p id="popupDescription"></p>
-                        <a id="popupLink" href="#" target="_blank"></a>
-                        <button onclick="hidePopup()">Close</button>
+                        <div class="popup-header">
+                            <h4 class="popup-title" id="popupTitle"></h4>
+                            <button class="popup-close" onclick="hidePopup()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="popup-content">
+                            <p class="popup-description" id="popupDescription"></p>
+                            <a class="popup-link" id="popupLink" href="#" target="_blank" style="display: none;"></a>
+                            <div class="popup-media" id="popupMedia"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -314,7 +448,11 @@
             markerTitle: document.getElementById('markerTitle'),
             markerDescription: document.getElementById('markerDescription'),
             markerLink: document.getElementById('markerLink'),
-            linkField: document.getElementById('linkField'),
+            markerVideo: document.getElementById('markerVideo'),
+            markerAudio: document.getElementById('markerAudio'),
+            linkField: document.querySelector('.link-field'),
+            videoField: document.querySelector('.video-field'),
+            audioField: document.querySelector('.audio-field'),
             saveMarker: document.getElementById('saveMarker'),
             clearMarkers: document.getElementById('clearMarkers'),
             markerList: document.getElementById('markerList'),
@@ -324,7 +462,8 @@
             markerPopup: document.getElementById('markerPopup'),
             popupTitle: document.getElementById('popupTitle'),
             popupDescription: document.getElementById('popupDescription'),
-            popupLink: document.getElementById('popupLink')
+            popupLink: document.getElementById('popupLink'),
+            popupMedia: document.getElementById('popupMedia')
         };
 
         // Initialize app
@@ -343,7 +482,7 @@
                     elements.markerTypes.forEach(t => t.classList.remove('active'));
                     type.classList.add('active');
                     currentMarkerType = type.dataset.type;
-                    updateLinkField();
+                    updateFieldsVisibility();
                 });
             });
 
@@ -355,7 +494,7 @@
 
             elements.imageDisplay.addEventListener('click', addMarker);
 
-            updateLinkField();
+            updateFieldsVisibility();
         }
 
         function handleImageUpload(event) {
@@ -399,13 +538,6 @@
             imageOffset.x = imgRect.left - containerRect.left;
             imageOffset.y = imgRect.top - containerRect.top;
             imageScale = imgRect.width / img.naturalWidth;
-            
-            console.log('Image position calculated:', {
-                offset: imageOffset,
-                scale: imageScale,
-                container: { width: containerRect.width, height: containerRect.height },
-                image: { width: imgRect.width, height: imgRect.height }
-            });
         }
 
         function addMarker(event) {
@@ -429,8 +561,6 @@
             const displayX = event.clientX - containerRect.left;
             const displayY = event.clientY - containerRect.top;
 
-            console.log('Marker added at:', { imageX, imageY, displayX, displayY, clickX, clickY });
-
             const marker = {
                 id: Date.now(),
                 type: currentMarkerType,
@@ -440,7 +570,9 @@
                 displayY: displayY,
                 title: elements.markerTitle.value || 'New Marker',
                 description: elements.markerDescription.value || '',
-                link: elements.markerLink.value || ''
+                link: elements.markerLink.value || '',
+                video: elements.markerVideo.value || '',
+                audio: elements.markerAudio.value || ''
             };
 
             markers.push(marker);
@@ -451,6 +583,8 @@
             elements.markerTitle.value = '';
             elements.markerDescription.value = '';
             elements.markerLink.value = '';
+            elements.markerVideo.value = '';
+            elements.markerAudio.value = '';
         }
 
         function renderMarker(marker) {
@@ -463,11 +597,13 @@
             markerElement.dataset.id = marker.id;
 
             // Add icon based on type
-            let icon = 'i';
-            if (marker.type === 'link') icon = 'L';
-            else if (marker.type === 'video') icon = 'V';
-            else if (marker.type === 'audio') icon = 'A';
-            markerElement.textContent = icon;
+            let icon = '';
+            if (marker.type === 'info') icon = '<i class="fas fa-info-circle"></i>';
+            else if (marker.type === 'link') icon = '<i class="fas fa-link"></i>';
+            else if (marker.type === 'video') icon = '<i class="fas fa-video"></i>';
+            else if (marker.type === 'audio') icon = '<i class="fas fa-volume-up"></i>';
+            
+            markerElement.innerHTML = icon;
 
             markerElement.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -498,17 +634,80 @@
             elements.popupTitle.textContent = marker.title;
             elements.popupDescription.textContent = marker.description;
             
-            if (marker.link) {
+            // Clear previous media
+            elements.popupMedia.innerHTML = '';
+            elements.popupLink.style.display = 'none';
+            
+            // Show appropriate content based on marker type
+            if (marker.type === 'link' && marker.link) {
                 elements.popupLink.href = marker.link;
                 elements.popupLink.textContent = marker.link;
                 elements.popupLink.style.display = 'block';
-            } else {
-                elements.popupLink.style.display = 'none';
+            }
+            else if (marker.type === 'video' && marker.video) {
+                const videoElement = createMediaElement(marker.video, 'video');
+                elements.popupMedia.appendChild(videoElement);
+            }
+            else if (marker.type === 'audio' && marker.audio) {
+                const audioElement = createMediaElement(marker.audio, 'audio');
+                elements.popupMedia.appendChild(audioElement);
             }
 
             elements.markerPopup.style.left = (marker.displayX + 20) + 'px';
             elements.markerPopup.style.top = (marker.displayY - 20) + 'px';
             elements.markerPopup.style.display = 'block';
+        }
+
+        function createMediaElement(url, type) {
+            if (type === 'video') {
+                // Check if it's a YouTube or Vimeo URL
+                if (url.includes('youtube.com') || url.includes('youtu.be') || url.includes('vimeo.com')) {
+                    const embedUrl = getEmbedUrl(url);
+                    const iframe = document.createElement('iframe');
+                    iframe.src = embedUrl;
+                    iframe.width = '100%';
+                    iframe.height = '200';
+                    iframe.style.border = 'none';
+                    iframe.style.borderRadius = '4px';
+                    iframe.allowFullscreen = true;
+                    return iframe;
+                } else {
+                    // Direct video file
+                    const video = document.createElement('video');
+                    video.src = url;
+                    video.controls = true;
+                    video.className = 'popup-video';
+                    video.style.width = '100%';
+                    video.style.maxHeight = '200px';
+                    return video;
+                }
+            } else if (type === 'audio') {
+                const audio = document.createElement('audio');
+                audio.src = url;
+                audio.controls = true;
+                audio.className = 'popup-audio';
+                audio.style.width = '100%';
+                return audio;
+            }
+        }
+
+        function getEmbedUrl(url) {
+            // YouTube embed
+            if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                let videoId = '';
+                if (url.includes('youtube.com')) {
+                    videoId = new URL(url).searchParams.get('v');
+                } else if (url.includes('youtu.be')) {
+                    videoId = url.split('/').pop().split('?')[0];
+                }
+                return `https://www.youtube.com/embed/${videoId}`;
+            }
+            // Vimeo embed
+            else if (url.includes('vimeo.com')) {
+                const videoId = url.split('/').pop();
+                return `https://player.vimeo.com/video/${videoId}`;
+            }
+            return url;
         }
 
         function hidePopup() {
@@ -523,6 +722,8 @@
                     marker.title = elements.markerTitle.value;
                     marker.description = elements.markerDescription.value;
                     marker.link = elements.markerLink.value;
+                    marker.video = elements.markerVideo.value;
+                    marker.audio = elements.markerAudio.value;
                     marker.type = currentMarkerType;
                     updateMarkerList();
                     renderAllMarkers();
@@ -550,10 +751,19 @@
 
             let html = '';
             markers.forEach(marker => {
-                html += '<div class="marker-item" data-id="' + marker.id + '">' +
-                       '<strong>' + marker.title + '</strong><br>' +
-                       '<small>' + marker.type + '</small>' +
-                       '</div>';
+                let icon = '';
+                if (marker.type === 'info') icon = '<i class="fas fa-info-circle"></i>';
+                else if (marker.type === 'link') icon = '<i class="fas fa-link"></i>';
+                else if (marker.type === 'video') icon = '<i class="fas fa-video"></i>';
+                else if (marker.type === 'audio') icon = '<i class="fas fa-volume-up"></i>';
+
+                html += `<div class="marker-item" data-id="${marker.id}">
+                    <div class="marker-item-icon ${marker.type}">${icon}</div>
+                    <div>
+                        <strong>${marker.title}</strong><br>
+                        <small>${marker.type}</small>
+                    </div>
+                </div>`;
             });
 
             elements.markerList.innerHTML = html;
@@ -568,14 +778,35 @@
                         elements.markerTitle.value = marker.title;
                         elements.markerDescription.value = marker.description;
                         elements.markerLink.value = marker.link;
+                        elements.markerVideo.value = marker.video;
+                        elements.markerAudio.value = marker.audio;
+                        
+                        // Set the correct marker type active
+                        elements.markerTypes.forEach(t => t.classList.remove('active'));
+                        document.querySelector(`.marker-type[data-type="${marker.type}"]`).classList.add('active');
+                        currentMarkerType = marker.type;
+                        updateFieldsVisibility();
+                        
                         showMarkerInfo(marker);
                     }
                 });
             });
         }
 
-        function updateLinkField() {
-            elements.linkField.style.display = currentMarkerType === 'link' ? 'block' : 'none';
+        function updateFieldsVisibility() {
+            // Hide all fields first
+            elements.linkField.style.display = 'none';
+            elements.videoField.style.display = 'none';
+            elements.audioField.style.display = 'none';
+            
+            // Show only the relevant field
+            if (currentMarkerType === 'link') {
+                elements.linkField.style.display = 'block';
+            } else if (currentMarkerType === 'video') {
+                elements.videoField.style.display = 'block';
+            } else if (currentMarkerType === 'audio') {
+                elements.audioField.style.display = 'block';
+            }
         }
 
         function saveProject() {
@@ -643,34 +874,102 @@
 <html>
 <head>
     <title>${projectName}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { margin: 20px; text-align: center; font-family: Arial, sans-serif; }
-        .image-container { position: relative; display: inline-block; max-width: 100%; }
-        img { max-width: 100%; height: auto; }
-        .marker { position: absolute; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        body { margin: 20px; text-align: center; font-family: Arial, sans-serif; background: #f0f2f5; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .image-container { position: relative; display: inline-block; max-width: 100%; margin: 20px 0; }
+        img { max-width: 100%; height: auto; border-radius: 5px; }
+        .marker { position: absolute; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); transition: transform 0.2s; }
+        .marker:hover { transform: translate(-50%, -50%) scale(1.2); }
         .marker.info { background: #17a2b8; }
         .marker.link { background: #28a745; }
         .marker.video { background: #dc3545; }
         .marker.audio { background: #ffc107; }
-        .popup { position: absolute; background: white; border: 1px solid #ccc; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: none; z-index: 100; max-width: 300px; border-radius: 5px; }
+        .popup { position: absolute; background: white; border: 1px solid #ccc; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); display: none; z-index: 100; max-width: 350px; min-width: 250px; border-radius: 8px; }
+        .popup-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .popup-title { color: #4a6fa5; margin: 0; flex: 1; }
+        .popup-close { background: none; border: none; font-size: 18px; cursor: pointer; color: #6c757d; }
+        .popup-content { margin-bottom: 15px; }
+        .popup-description { color: #495057; line-height: 1.4; margin-bottom: 10px; }
+        .popup-link { display: block; color: #4a6fa5; text-decoration: none; margin-bottom: 10px; word-break: break-all; }
+        .popup-link:hover { text-decoration: underline; }
+        .popup-media { width: 100%; margin-top: 10px; }
+        .popup-video, .popup-audio { width: 100%; border-radius: 4px; }
+        iframe { border-radius: 4px; }
     </style>
 </head>
 <body>
-    <h1>${projectName}</h1>
-    <div class="image-container">
-        <img src="${currentImage.src}" alt="Interactive Image" id="exportedImage">
-        <div id="markers"></div>
-        <div class="popup" id="popup">
-            <h4 id="popupTitle"></h4>
-            <p id="popupDesc"></p>
-            <a id="popupLink" href="#" target="_blank"></a>
-            <button onclick="document.getElementById('popup').style.display='none'">Close</button>
+    <div class="container">
+        <h1>${projectName}</h1>
+        <div class="image-container">
+            <img src="${currentImage.src}" alt="Interactive Image" id="exportedImage">
+            <div id="markers"></div>
+            <div class="popup" id="popup">
+                <div class="popup-header">
+                    <h4 class="popup-title" id="popupTitle"></h4>
+                    <button class="popup-close" onclick="document.getElementById('popup').style.display='none'">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="popup-content">
+                    <p class="popup-description" id="popupDesc"></p>
+                    <a class="popup-link" id="popupLink" href="#" target="_blank" style="display: none;"></a>
+                    <div class="popup-media" id="popupMedia"></div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
         const markers = ${JSON.stringify(markers)};
         const image = document.getElementById('exportedImage');
+        
+        function createMediaElement(url, type) {
+            if (type === 'video') {
+                if (url.includes('youtube.com') || url.includes('youtu.be') || url.includes('vimeo.com')) {
+                    const embedUrl = getEmbedUrl(url);
+                    const iframe = document.createElement('iframe');
+                    iframe.src = embedUrl;
+                    iframe.width = '100%';
+                    iframe.height = '200';
+                    iframe.style.border = 'none';
+                    iframe.allowFullscreen = true;
+                    return iframe;
+                } else {
+                    const video = document.createElement('video');
+                    video.src = url;
+                    video.controls = true;
+                    video.className = 'popup-video';
+                    video.style.width = '100%';
+                    video.style.maxHeight = '200px';
+                    return video;
+                }
+            } else if (type === 'audio') {
+                const audio = document.createElement('audio');
+                audio.src = url;
+                audio.controls = true;
+                audio.className = 'popup-audio';
+                audio.style.width = '100%';
+                return audio;
+            }
+        }
+        
+        function getEmbedUrl(url) {
+            if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                let videoId = '';
+                if (url.includes('youtube.com')) {
+                    videoId = new URL(url).searchParams.get('v');
+                } else if (url.includes('youtu.be')) {
+                    videoId = url.split('/').pop().split('?')[0];
+                }
+                return \\`https://www.youtube.com/embed/\\${videoId}\\`;
+            } else if (url.includes('vimeo.com')) {
+                const videoId = url.split('/').pop();
+                return \\`https://player.vimeo.com/video/\\${videoId}\\`;
+            }
+            return url;
+        }
         
         image.onload = function() {
             const imgRect = image.getBoundingClientRect();
@@ -685,25 +984,36 @@
                 m.style.left = x + 'px';
                 m.style.top = y + 'px';
                 
-                let icon = 'i';
-                if (marker.type === 'link') icon = 'L';
-                else if (marker.type === 'video') icon = 'V';
-                else if (marker.type === 'audio') icon = 'A';
-                m.textContent = icon;
+                let icon = '';
+                if (marker.type === 'info') icon = '<i class="fas fa-info-circle"></i>';
+                else if (marker.type === 'link') icon = '<i class="fas fa-link"></i>';
+                else if (marker.type === 'video') icon = '<i class="fas fa-video"></i>';
+                else if (marker.type === 'audio') icon = '<i class="fas fa-volume-up"></i>';
+                m.innerHTML = icon;
                 
                 m.onclick = function(e) {
                     e.stopPropagation();
                     document.getElementById('popupTitle').textContent = marker.title;
                     document.getElementById('popupDesc').textContent = marker.description;
+                    
                     const link = document.getElementById('popupLink');
-                    if (marker.link) {
+                    const media = document.getElementById('popupMedia');
+                    media.innerHTML = '';
+                    link.style.display = 'none';
+                    
+                    if (marker.type === 'link' && marker.link) {
                         link.href = marker.link;
                         link.textContent = marker.link;
                         link.style.display = 'block';
-                    } else {
-                        link.style.display = 'none';
+                    } else if (marker.type === 'video' && marker.video) {
+                        const videoElement = createMediaElement(marker.video, 'video');
+                        media.appendChild(videoElement);
+                    } else if (marker.type === 'audio' && marker.audio) {
+                        const audioElement = createMediaElement(marker.audio, 'audio');
+                        media.appendChild(audioElement);
                     }
-                    document.getElementById('popup').style.left = (x + 30) + 'px';
+                    
+                    document.getElementById('popup').style.left = (x + 40) + 'px';
                     document.getElementById('popup').style.top = (y - 20) + 'px';
                     document.getElementById('popup').style.display = 'block';
                 };
@@ -712,12 +1022,11 @@
         };
         
         document.addEventListener('click', function(e) {
-            if (!e.target.classList.contains('marker')) {
+            if (!e.target.closest('.marker') && !e.target.closest('.popup')) {
                 document.getElementById('popup').style.display = 'none';
             }
         });
         
-        // Handle window resize
         window.addEventListener('resize', function() {
             document.getElementById('markers').innerHTML = '';
             if (image.complete) {
