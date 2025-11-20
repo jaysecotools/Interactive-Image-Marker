@@ -559,6 +559,7 @@
 
             imageDisplay.addEventListener('click', addMarker);
 
+            // Initialize field visibility
             updateFieldsVisibility();
         }
 
@@ -700,6 +701,8 @@
         }
 
         function showMarkerInfo(marker) {
+            console.log('Showing marker info:', marker); // Debug log
+            
             popupTitle.textContent = marker.title;
             popupDescription.textContent = marker.description;
             
@@ -709,15 +712,18 @@
             
             // Show appropriate content based on marker type
             if (marker.type === 'link' && marker.link) {
+                console.log('Showing link:', marker.link); // Debug log
                 popupLink.href = marker.link;
                 popupLink.textContent = marker.link;
                 popupLink.style.display = 'block';
             }
             else if (marker.type === 'video' && marker.video) {
+                console.log('Showing video:', marker.video); // Debug log
                 const videoElement = createMediaElement(marker.video, 'video');
                 popupMedia.appendChild(videoElement);
             }
             else if (marker.type === 'audio' && marker.audio) {
+                console.log('Showing audio:', marker.audio); // Debug log
                 const audioElement = createMediaElement(marker.audio, 'audio');
                 popupMedia.appendChild(audioElement);
             }
@@ -744,9 +750,13 @@
         }
 
         function createMediaElement(url, type) {
+            console.log('Creating media element:', url, type); // Debug log
+            
             if (type === 'video') {
                 if (url.includes('youtube.com') || url.includes('youtu.be') || url.includes('vimeo.com')) {
                     const embedUrl = getEmbedUrl(url);
+                    console.log('Embed URL:', embedUrl); // Debug log
+                    
                     const videoContainer = document.createElement('div');
                     videoContainer.className = 'video-container';
                     
@@ -960,6 +970,8 @@
         }
 
         function updateFieldsVisibility() {
+            console.log('Updating fields visibility for:', currentMarkerType); // Debug log
+            
             // Hide all fields first
             linkField.style.display = 'none';
             videoField.style.display = 'none';
