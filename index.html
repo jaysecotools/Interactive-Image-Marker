@@ -368,6 +368,11 @@
             border: none;
             border-radius: 4px;
         }
+
+        /* Fix: Make sure form fields are visible by default */
+        .link-field, .video-field, .audio-field {
+            display: block !important;
+        }
     </style>
 </head>
 <body>
@@ -611,7 +616,8 @@
             const displayX = event.clientX - containerRect.left;
             const displayY = event.clientY - containerRect.top;
 
-            const marker = {
+            // Get values from form fields
+            const markerData = {
                 id: Date.now(),
                 type: currentMarkerType,
                 x: imageX,
@@ -625,8 +631,10 @@
                 audio: markerAudio.value || ''
             };
 
-            markers.push(marker);
-            renderMarker(marker);
+            console.log('Adding marker with data:', markerData); // Debug
+
+            markers.push(markerData);
+            renderMarker(markerData);
             updateMarkerList();
 
             // Clear form
@@ -720,12 +728,16 @@
             else if (marker.type === 'video' && marker.video) {
                 console.log('Showing video:', marker.video); // Debug log
                 const videoElement = createMediaElement(marker.video, 'video');
-                popupMedia.appendChild(videoElement);
+                if (videoElement) {
+                    popupMedia.appendChild(videoElement);
+                }
             }
             else if (marker.type === 'audio' && marker.audio) {
                 console.log('Showing audio:', marker.audio); // Debug log
                 const audioElement = createMediaElement(marker.audio, 'audio');
-                popupMedia.appendChild(audioElement);
+                if (audioElement) {
+                    popupMedia.appendChild(audioElement);
+                }
             }
 
             // Position popup with boundary checking
@@ -751,6 +763,8 @@
 
         function createMediaElement(url, type) {
             console.log('Creating media element:', url, type); // Debug log
+            
+            if (!url) return null;
             
             if (type === 'video') {
                 if (url.includes('youtube.com') || url.includes('youtu.be') || url.includes('vimeo.com')) {
@@ -790,6 +804,8 @@
                 audio.style.width = '100%';
                 return audio;
             }
+            
+            return null;
         }
 
         function getEmbedUrl(url) {
