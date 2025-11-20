@@ -4,181 +4,96 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive Image Marker</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --primary: #4361ee;
-            --secondary: #3f37c9;
-            --success: #4cc9f0;
-            --danger: #f72585;
-            --warning: #f8961e;
-            --light: #f8f9fa;
-            --dark: #212529;
-            --border-radius: 8px;
-            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: Arial, sans-serif;
         }
 
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
+            background: #f0f2f5;
             padding: 20px;
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
-        }
-
-        header {
             background: white;
-            border-radius: var(--border-radius);
-            padding: 30px;
-            margin-bottom: 20px;
-            box-shadow: var(--shadow);
-            text-align: center;
-        }
-
-        h1 {
-            color: var(--primary);
-            margin-bottom: 10px;
-            font-size: 2.5rem;
-        }
-
-        .subtitle {
-            color: #666;
-            font-size: 1.1rem;
-        }
-
-        .app-container {
-            display: grid;
-            grid-template-columns: 300px 1fr;
-            gap: 20px;
-            height: calc(100vh - 200px);
-        }
-
-        .sidebar {
-            background: white;
-            border-radius: var(--border-radius);
-            padding: 20px;
-            box-shadow: var(--shadow);
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            overflow-y: auto;
-        }
-
-        .main-content {
-            background: white;
-            border-radius: var(--border-radius);
-            padding: 20px;
-            box-shadow: var(--shadow);
-            position: relative;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             overflow: hidden;
         }
 
+        header {
+            background: #4a6fa5;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 600px;
+        }
+
+        .sidebar {
+            width: 300px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-right: 1px solid #dee2e6;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            position: relative;
+        }
+
         .section {
-            background: var(--light);
-            border-radius: var(--border-radius);
-            padding: 15px;
+            margin-bottom: 25px;
         }
 
         .section h3 {
+            color: #4a6fa5;
             margin-bottom: 15px;
-            color: var(--primary);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .section h3 i {
-            font-size: 1.2rem;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #e9ecef;
         }
 
         .btn {
             padding: 10px 15px;
             border: none;
-            border-radius: var(--border-radius);
+            border-radius: 5px;
             cursor: pointer;
-            font-weight: 500;
-            transition: all 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
+            font-size: 14px;
+            margin: 5px;
         }
 
         .btn-primary {
-            background: var(--primary);
+            background: #4a6fa5;
             color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--secondary);
         }
 
         .btn-danger {
-            background: var(--danger);
+            background: #dc3545;
             color: white;
-        }
-
-        .btn-danger:hover {
-            background: #e11574;
         }
 
         .btn-success {
-            background: var(--success);
+            background: #28a745;
             color: white;
-        }
-
-        .btn-success:hover {
-            background: #3ab8de;
-        }
-
-        .btn-warning {
-            background: var(--warning);
-            color: white;
-        }
-
-        .btn-warning:hover {
-            background: #e68a19;
-        }
-
-        .btn-full {
-            width: 100%;
-            justify-content: center;
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
         }
 
         .file-input {
             width: 100%;
             padding: 15px;
-            border: 2px dashed #ddd;
-            border-radius: var(--border-radius);
+            border: 2px dashed #dee2e6;
+            border-radius: 5px;
             text-align: center;
             cursor: pointer;
-            transition: border-color 0.3s;
             margin-bottom: 15px;
-        }
-
-        .file-input:hover {
-            border-color: var(--primary);
-        }
-
-        .file-input i {
-            font-size: 2rem;
-            color: var(--primary);
-            margin-bottom: 10px;
         }
 
         .marker-types {
@@ -189,24 +104,17 @@
         }
 
         .marker-type {
-            padding: 12px;
-            background: white;
-            border: 2px solid #e9ecef;
-            border-radius: var(--border-radius);
-            cursor: pointer;
+            padding: 10px;
+            border: 2px solid #dee2e6;
+            border-radius: 5px;
             text-align: center;
-            transition: all 0.3s;
+            cursor: pointer;
         }
 
         .marker-type.active {
-            border-color: var(--primary);
-            background: var(--primary);
+            border-color: #4a6fa5;
+            background: #4a6fa5;
             color: white;
-        }
-
-        .marker-type i {
-            font-size: 1.2rem;
-            margin-bottom: 5px;
         }
 
         .form-group {
@@ -216,16 +124,14 @@
         .form-group label {
             display: block;
             margin-bottom: 5px;
-            font-weight: 500;
-            color: var(--dark);
+            font-weight: bold;
         }
 
         .form-control {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: var(--border-radius);
-            font-size: 1rem;
+            padding: 8px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
         }
 
         textarea.form-control {
@@ -236,69 +142,30 @@
         .marker-list {
             max-height: 200px;
             overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
         }
 
         .marker-item {
-            padding: 12px;
-            background: white;
-            border-radius: var(--border-radius);
-            margin-bottom: 8px;
+            padding: 8px;
+            border-bottom: 1px solid #dee2e6;
             cursor: pointer;
-            transition: all 0.3s;
-            border-left: 4px solid var(--primary);
         }
 
         .marker-item:hover {
-            background: #f8f9fa;
-        }
-
-        .marker-item.selected {
-            background: #e3f2fd;
-            border-left-color: var(--success);
-        }
-
-        .marker-item-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 5px;
-        }
-
-        .marker-title {
-            font-weight: 600;
-            color: var(--dark);
-        }
-
-        .marker-type-badge {
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .marker-type-info { background: var(--success); color: white; }
-        .marker-type-link { background: var(--primary); color: white; }
-        .marker-type-video { background: var(--danger); color: white; }
-        .marker-type-audio { background: var(--warning); color: white; }
-
-        .marker-description {
-            font-size: 0.9rem;
-            color: #666;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            background: #e9ecef;
         }
 
         .image-container {
             width: 100%;
-            height: 100%;
+            height: 500px;
+            border: 2px dashed #dee2e6;
+            border-radius: 5px;
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
-            background: #f8f9fa;
-            border-radius: var(--border-radius);
             overflow: hidden;
         }
 
@@ -311,13 +178,6 @@
         .empty-state {
             text-align: center;
             color: #6c757d;
-            padding: 40px;
-        }
-
-        .empty-state i {
-            font-size: 4rem;
-            margin-bottom: 20px;
-            color: #dee2e6;
         }
 
         .marker {
@@ -326,240 +186,108 @@
             height: 24px;
             border-radius: 50%;
             cursor: pointer;
+            transform: translate(-50%, -50%);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 0.8rem;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            transition: all 0.3s;
-            z-index: 10;
+            font-size: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
 
-        .marker:hover {
-            transform: translate(-50%, -50%) scale(1.3);
-        }
-
-        .marker.selected {
-            box-shadow: 0 0 0 3px white, 0 0 0 6px var(--primary);
-        }
-
-        .marker.info { background: var(--success); }
-        .marker.link { background: var(--primary); }
-        .marker.video { background: var(--danger); }
-        .marker.audio { background: var(--warning); }
+        .marker.info { background: #17a2b8; }
+        .marker.link { background: #28a745; }
+        .marker.video { background: #dc3545; }
+        .marker.audio { background: #ffc107; }
 
         .marker-popup {
             position: absolute;
             background: white;
-            border-radius: var(--border-radius);
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
             padding: 15px;
-            box-shadow: var(--shadow);
-            min-width: 250px;
-            max-width: 300px;
-            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             display: none;
-        }
-
-        .marker-popup h4 {
-            margin-bottom: 8px;
-            color: var(--primary);
-        }
-
-        .marker-popup p {
-            margin-bottom: 10px;
-            color: #666;
-            line-height: 1.4;
-        }
-
-        .marker-popup a {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 500;
-            word-break: break-all;
-        }
-
-        .marker-popup a:hover {
-            text-decoration: underline;
-        }
-
-        .close-popup {
-            position: absolute;
-            top: 8px;
-            right: 12px;
-            cursor: pointer;
-            color: #999;
-            font-weight: bold;
-        }
-
-        .project-item {
-            padding: 12px;
-            background: white;
-            border-radius: var(--border-radius);
-            margin-bottom: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .project-item:hover {
-            background: #f8f9fa;
-        }
-
-        .project-name {
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-
-        .project-date {
-            font-size: 0.8rem;
-            color: #6c757d;
-        }
-
-        .export-options {
-            display: grid;
-            gap: 10px;
+            z-index: 100;
+            max-width: 300px;
         }
 
         .hidden {
             display: none;
-        }
-
-        input[type="file"] {
-            display: none;
-        }
-
-        @media (max-width: 1024px) {
-            .app-container {
-                grid-template-columns: 1fr;
-                height: auto;
-            }
-            
-            .sidebar {
-                order: 2;
-            }
-            
-            .main-content {
-                min-height: 500px;
-            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1><i class="fas fa-map-marker-alt"></i> Interactive Image Marker</h1>
-            <p class="subtitle">Add interactive markers to your images with information, links, and media</p>
+            <h1>Interactive Image Marker</h1>
+            <p>Add markers to your images with information and links</p>
         </header>
 
         <div class="app-container">
             <div class="sidebar">
                 <div class="section">
-                    <h3><i class="fas fa-upload"></i> Upload Image</h3>
+                    <h3>Upload Image</h3>
                     <div class="file-input" id="fileInput">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                        <p>Click to upload an image</p>
-                        <p class="small">Supports JPG, PNG, GIF</p>
+                        Click to upload image
                     </div>
                     <input type="file" id="imageUpload" accept="image/*" class="hidden">
                 </div>
 
                 <div class="section">
-                    <h3><i class="fas fa-map-pin"></i> Add Marker</h3>
+                    <h3>Add Marker</h3>
                     <div class="marker-types">
-                        <div class="marker-type active" data-type="info">
-                            <i class="fas fa-info-circle"></i>
-                            <div>Info</div>
-                        </div>
-                        <div class="marker-type" data-type="link">
-                            <i class="fas fa-link"></i>
-                            <div>Link</div>
-                        </div>
-                        <div class="marker-type" data-type="video">
-                            <i class="fas fa-video"></i>
-                            <div>Video</div>
-                        </div>
-                        <div class="marker-type" data-type="audio">
-                            <i class="fas fa-volume-up"></i>
-                            <div>Audio</div>
-                        </div>
+                        <div class="marker-type active" data-type="info">Info</div>
+                        <div class="marker-type" data-type="link">Link</div>
+                        <div class="marker-type" data-type="video">Video</div>
+                        <div class="marker-type" data-type="audio">Audio</div>
                     </div>
 
                     <div class="form-group">
-                        <label for="markerTitle">Title</label>
-                        <input type="text" id="markerTitle" class="form-control" placeholder="Enter marker title">
+                        <label>Title</label>
+                        <input type="text" id="markerTitle" class="form-control" placeholder="Marker title">
                     </div>
 
                     <div class="form-group">
-                        <label for="markerDescription">Description</label>
-                        <textarea id="markerDescription" class="form-control" placeholder="Enter marker description"></textarea>
+                        <label>Description</label>
+                        <textarea id="markerDescription" class="form-control" placeholder="Marker description"></textarea>
                     </div>
 
                     <div class="form-group" id="linkField">
-                        <label for="markerLink">Link URL</label>
+                        <label>Link URL</label>
                         <input type="url" id="markerLink" class="form-control" placeholder="https://example.com">
                     </div>
 
-                    <div class="btn-group">
-                        <button id="saveMarker" class="btn btn-primary btn-full">
-                            <i class="fas fa-save"></i> Save Marker
-                        </button>
-                    </div>
+                    <button id="saveMarker" class="btn btn-primary">Save Marker</button>
                 </div>
 
                 <div class="section">
-                    <h3><i class="fas fa-list"></i> Markers</h3>
+                    <h3>Markers</h3>
                     <div class="marker-list" id="markerList">
-                        <div class="empty-state">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <p>No markers added yet</p>
-                        </div>
+                        <div class="empty-state">No markers added</div>
                     </div>
-                    <div class="btn-group">
-                        <button id="clearMarkers" class="btn btn-danger">
-                            <i class="fas fa-trash"></i> Clear All
-                        </button>
-                    </div>
+                    <button id="clearMarkers" class="btn btn-danger">Clear All</button>
                 </div>
 
                 <div class="section">
-                    <h3><i class="fas fa-project-diagram"></i> Projects</h3>
-                    <div class="btn-group">
-                        <button id="saveProject" class="btn btn-success">
-                            <i class="fas fa-save"></i> Save Project
-                        </button>
-                        <button id="loadProject" class="btn btn-primary">
-                            <i class="fas fa-folder-open"></i> Load
-                        </button>
-                    </div>
-                    
-                    <div class="export-options">
-                        <button id="exportHTML" class="btn btn-warning">
-                            <i class="fas fa-file-export"></i> Export as HTML
-                        </button>
-                    </div>
-
-                    <div id="projectsList" class="mt-3">
-                        <div class="empty-state small">
-                            <p>No saved projects</p>
-                        </div>
-                    </div>
+                    <h3>Projects</h3>
+                    <button id="saveProject" class="btn btn-success">Save Project</button>
+                    <button id="loadProject" class="btn btn-primary">Load Project</button>
+                    <button id="exportHTML" class="btn btn-primary">Export HTML</button>
                 </div>
             </div>
 
             <div class="main-content">
                 <div class="image-container" id="imageContainer">
                     <div class="empty-state" id="emptyState">
-                        <i class="fas fa-image"></i>
-                        <h3>No Image Loaded</h3>
-                        <p>Upload an image to start adding markers</p>
+                        Upload an image to get started
                     </div>
                     <img id="imageDisplay" alt="Uploaded image">
                     <div class="marker-popup" id="markerPopup">
-                        <span class="close-popup">&times;</span>
                         <h4 id="popupTitle"></h4>
                         <p id="popupDescription"></p>
                         <a id="popupLink" href="#" target="_blank"></a>
+                        <button onclick="hidePopup()">Close</button>
                     </div>
                 </div>
             </div>
@@ -567,17 +295,15 @@
     </div>
 
     <script>
-        // Application state
-        const state = {
-            markers: [],
-            currentMarkerType: 'info',
-            selectedMarkerId: null,
-            currentImage: null,
-            imageScale: 1,
-            imageOffset: { x: 0, y: 0 }
-        };
+        // Simple state management
+        let markers = [];
+        let currentMarkerType = 'info';
+        let selectedMarkerId = null;
+        let currentImage = null;
+        let imageScale = 1;
+        let imageOffset = { x: 0, y: 0 };
 
-        // DOM Elements
+        // DOM elements
         const elements = {
             fileInput: document.getElementById('fileInput'),
             imageUpload: document.getElementById('imageUpload'),
@@ -595,795 +321,432 @@
             saveProject: document.getElementById('saveProject'),
             loadProject: document.getElementById('loadProject'),
             exportHTML: document.getElementById('exportHTML'),
-            projectsList: document.getElementById('projectsList'),
             markerPopup: document.getElementById('markerPopup'),
             popupTitle: document.getElementById('popupTitle'),
             popupDescription: document.getElementById('popupDescription'),
-            popupLink: document.getElementById('popupLink'),
-            closePopup: document.querySelector('.close-popup')
+            popupLink: document.getElementById('popupLink')
         };
 
-        // Initialize the application
+        // Initialize app
         function init() {
-            console.log('Initializing app...');
-            setupEventListeners();
-            loadProjectsList();
-            updateLinkFieldVisibility();
-        }
-
-        // Set up all event listeners
-        function setupEventListeners() {
-            console.log('Setting up event listeners...');
+            console.log('App initialized');
             
-            // File upload
+            // Event listeners
             elements.fileInput.addEventListener('click', () => {
-                console.log('File input clicked');
                 elements.imageUpload.click();
             });
+
             elements.imageUpload.addEventListener('change', handleImageUpload);
 
-            // Marker type selection
             elements.markerTypes.forEach(type => {
                 type.addEventListener('click', () => {
-                    console.log('Marker type selected:', type.dataset.type);
                     elements.markerTypes.forEach(t => t.classList.remove('active'));
                     type.classList.add('active');
-                    state.currentMarkerType = type.dataset.type;
-                    updateLinkFieldVisibility();
+                    currentMarkerType = type.dataset.type;
+                    updateLinkField();
                 });
             });
 
-            // Marker actions
             elements.saveMarker.addEventListener('click', saveMarker);
             elements.clearMarkers.addEventListener('click', clearMarkers);
-
-            // Project actions
             elements.saveProject.addEventListener('click', saveProject);
             elements.loadProject.addEventListener('click', loadProject);
-            elements.exportHTML.addEventListener('click', exportAsHTML);
+            elements.exportHTML.addEventListener('click', exportHTML);
 
-            // Popup
-            elements.closePopup.addEventListener('click', hidePopup);
-
-            // Image click for adding markers
             elements.imageDisplay.addEventListener('click', addMarker);
 
-            // Hide popup when clicking outside
-            document.addEventListener('click', (e) => {
-                if (!e.target.closest('.marker') && !e.target.closest('.marker-popup')) {
-                    hidePopup();
-                }
-            });
-
-            console.log('Event listeners setup complete');
+            updateLinkField();
         }
 
-        // Handle image upload
-        function handleImageUpload(e) {
-            console.log('Image upload triggered');
-            const file = e.target.files[0];
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
             if (!file) return;
 
             const reader = new FileReader();
-            reader.onload = function(event) {
+            reader.onload = function(e) {
                 const img = new Image();
                 img.onload = function() {
-                    console.log('Image loaded:', img.width, 'x', img.height);
-                    state.currentImage = {
-                        src: event.target.result,
+                    currentImage = {
+                        src: e.target.result,
                         width: img.width,
                         height: img.height
                     };
                     
-                    elements.imageDisplay.src = state.currentImage.src;
+                    elements.imageDisplay.src = currentImage.src;
                     elements.imageDisplay.style.display = 'block';
                     elements.emptyState.style.display = 'none';
                     
-                    // Clear previous markers
-                    state.markers = [];
-                    state.selectedMarkerId = null;
-                    updateMarkerList();
-                    renderMarkers();
-                    
-                    // Calculate image scale and offset for positioning
+                    // Calculate image position and scale
                     calculateImagePosition();
+                    
+                    markers = [];
+                    updateMarkerList();
+                    renderAllMarkers();
                 };
-                img.src = event.target.result;
+                img.src = e.target.result;
             };
             reader.readAsDataURL(file);
         }
 
-        // Calculate image position and scale within container
         function calculateImagePosition() {
             const container = elements.imageContainer;
             const img = elements.imageDisplay;
             
-            const containerWidth = container.clientWidth;
-            const containerHeight = container.clientHeight;
-            const imgWidth = img.naturalWidth;
-            const imgHeight = img.naturalHeight;
+            const containerRect = container.getBoundingClientRect();
+            const imgRect = img.getBoundingClientRect();
             
-            const scale = Math.min(
-                containerWidth / imgWidth,
-                containerHeight / imgHeight
-            );
+            // Calculate how the image is positioned within the container
+            imageOffset.x = imgRect.left - containerRect.left;
+            imageOffset.y = imgRect.top - containerRect.top;
+            imageScale = imgRect.width / img.naturalWidth;
             
-            state.imageScale = scale;
-            state.imageOffset.x = (containerWidth - imgWidth * scale) / 2;
-            state.imageOffset.y = (containerHeight - imgHeight * scale) / 2;
-            
-            console.log('Image position calculated:', { scale, offset: state.imageOffset });
+            console.log('Image position calculated:', {
+                offset: imageOffset,
+                scale: imageScale,
+                container: { width: containerRect.width, height: containerRect.height },
+                image: { width: imgRect.width, height: imgRect.height }
+            });
         }
 
-        // Add marker to image
-        function addMarker(e) {
-            if (!state.currentImage) {
+        function addMarker(event) {
+            if (!currentImage) {
                 alert('Please upload an image first!');
                 return;
             }
 
-            const rect = elements.imageDisplay.getBoundingClientRect();
-            const x = (e.clientX - rect.left - state.imageOffset.x) / state.imageScale;
-            const y = (e.clientY - rect.top - state.imageOffset.y) / state.imageScale;
+            const containerRect = elements.imageContainer.getBoundingClientRect();
+            const imgRect = elements.imageDisplay.getBoundingClientRect();
+            
+            // Calculate click position relative to the actual image
+            const clickX = event.clientX - imgRect.left;
+            const clickY = event.clientY - imgRect.top;
+            
+            // Convert to image coordinates (percentage based)
+            const imageX = (clickX / imgRect.width) * 100;
+            const imageY = (clickY / imgRect.height) * 100;
+            
+            // Also store absolute pixel position for display
+            const displayX = event.clientX - containerRect.left;
+            const displayY = event.clientY - containerRect.top;
 
-            // Check if click is within image bounds
-            if (x < 0 || y < 0 || x > state.currentImage.width || y > state.currentImage.height) {
-                return;
-            }
+            console.log('Marker added at:', { imageX, imageY, displayX, displayY, clickX, clickY });
 
-            const markerId = Date.now();
             const marker = {
-                id: markerId,
-                type: state.currentMarkerType,
-                x: x,
-                y: y,
-                title: elements.markerTitle.value || `Marker ${state.markers.length + 1}`,
+                id: Date.now(),
+                type: currentMarkerType,
+                x: imageX, // Store as percentage for responsive positioning
+                y: imageY,
+                displayX: displayX, // Store absolute position for current display
+                displayY: displayY,
+                title: elements.markerTitle.value || 'New Marker',
                 description: elements.markerDescription.value || '',
                 link: elements.markerLink.value || ''
             };
 
-            state.markers.push(marker);
-            renderMarkers();
+            markers.push(marker);
+            renderMarker(marker);
             updateMarkerList();
-            
+
             // Clear form
             elements.markerTitle.value = '';
             elements.markerDescription.value = '';
             elements.markerLink.value = '';
-            
-            console.log('Marker added:', marker);
         }
 
-        // Render all markers on the image
-        function renderMarkers() {
+        function renderMarker(marker) {
+            const markerElement = document.createElement('div');
+            markerElement.className = 'marker ' + marker.type;
+            
+            // Position marker using the stored display coordinates
+            markerElement.style.left = marker.displayX + 'px';
+            markerElement.style.top = marker.displayY + 'px';
+            markerElement.dataset.id = marker.id;
+
+            // Add icon based on type
+            let icon = 'i';
+            if (marker.type === 'link') icon = 'L';
+            else if (marker.type === 'video') icon = 'V';
+            else if (marker.type === 'audio') icon = 'A';
+            markerElement.textContent = icon;
+
+            markerElement.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showMarkerInfo(marker);
+            });
+
+            elements.imageContainer.appendChild(markerElement);
+        }
+
+        function renderAllMarkers() {
             // Clear existing markers
             document.querySelectorAll('.marker').forEach(marker => marker.remove());
-
-            state.markers.forEach(marker => {
-                const markerElement = document.createElement('div');
-                markerElement.className = `marker ${marker.type}`;
-                markerElement.dataset.id = marker.id;
+            
+            // Recalculate display positions for all markers
+            markers.forEach(marker => {
+                const imgRect = elements.imageDisplay.getBoundingClientRect();
+                const containerRect = elements.imageContainer.getBoundingClientRect();
                 
-                // Calculate screen position
-                const screenX = marker.x * state.imageScale + state.imageOffset.x;
-                const screenY = marker.y * state.imageScale + state.imageOffset.y;
+                // Convert percentage back to current display coordinates
+                marker.displayX = (marker.x / 100) * imgRect.width + (imgRect.left - containerRect.left);
+                marker.displayY = (marker.y / 100) * imgRect.height + (imgRect.top - containerRect.top);
                 
-                markerElement.style.left = `${screenX}px`;
-                markerElement.style.top = `${screenY}px`;
-                
-                // Set icon based on marker type
-                let iconClass = 'fas fa-info-circle';
-                if (marker.type === 'link') iconClass = 'fas fa-link';
-                else if (marker.type === 'video') iconClass = 'fas fa-video';
-                else if (marker.type === 'audio') iconClass = 'fas fa-volume-up';
-                
-                markerElement.innerHTML = `<i class="${iconClass}"></i>`;
-                
-                // Add event listeners
-                markerElement.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    selectMarker(marker.id);
-                    showMarkerInfo(marker, screenX, screenY);
-                });
-                
-                elements.imageContainer.appendChild(markerElement);
+                renderMarker(marker);
             });
         }
 
-        // Show marker info in popup
-        function showMarkerInfo(marker, x, y) {
+        function showMarkerInfo(marker) {
             elements.popupTitle.textContent = marker.title;
             elements.popupDescription.textContent = marker.description;
             
-            if (marker.link && marker.type === 'link') {
+            if (marker.link) {
                 elements.popupLink.href = marker.link;
                 elements.popupLink.textContent = marker.link;
                 elements.popupLink.style.display = 'block';
             } else {
                 elements.popupLink.style.display = 'none';
             }
-            
-            // Position popup
-            const popup = elements.markerPopup;
-            const containerRect = elements.imageContainer.getBoundingClientRect();
-            
-            let popupX = x + 20;
-            let popupY = y;
-            
-            // Adjust if popup would go outside container
-            if (popupX + 300 > containerRect.width) {
-                popupX = x - 320;
-            }
-            
-            if (popupY + 200 > containerRect.height) {
-                popupY = y - 200;
-            }
-            
-            popup.style.left = `${popupX}px`;
-            popup.style.top = `${popupY}px`;
-            popup.style.display = 'block';
+
+            elements.markerPopup.style.left = (marker.displayX + 20) + 'px';
+            elements.markerPopup.style.top = (marker.displayY - 20) + 'px';
+            elements.markerPopup.style.display = 'block';
         }
 
-        // Hide marker popup
         function hidePopup() {
             elements.markerPopup.style.display = 'none';
         }
 
-        // Select a marker
-        function selectMarker(markerId) {
-            state.selectedMarkerId = markerId;
-            
-            // Update marker visuals
-            document.querySelectorAll('.marker').forEach(marker => {
-                marker.classList.remove('selected');
-            });
-            
-            const selectedMarker = document.querySelector(`.marker[data-id="${markerId}"]`);
-            if (selectedMarker) {
-                selectedMarker.classList.add('selected');
-            }
-            
-            // Update list selection
-            updateMarkerList();
-        }
-
-        // Save marker from form
         function saveMarker() {
-            if (!state.selectedMarkerId) {
-                alert('Please select a marker first by clicking on it.');
-                return;
-            }
-            
-            const marker = state.markers.find(m => m.id === state.selectedMarkerId);
-            if (marker) {
-                marker.title = elements.markerTitle.value || marker.title;
-                marker.description = elements.markerDescription.value || marker.description;
-                marker.link = elements.markerLink.value || marker.link;
-                marker.type = state.currentMarkerType;
-                
-                updateMarkerList();
-                renderMarkers();
-                alert('Marker updated successfully!');
+            if (selectedMarkerId) {
+                // Update existing marker
+                const marker = markers.find(m => m.id === selectedMarkerId);
+                if (marker) {
+                    marker.title = elements.markerTitle.value;
+                    marker.description = elements.markerDescription.value;
+                    marker.link = elements.markerLink.value;
+                    marker.type = currentMarkerType;
+                    updateMarkerList();
+                    renderAllMarkers();
+                    alert('Marker updated!');
+                }
+            } else {
+                alert('Please select a marker first by clicking on it');
             }
         }
 
-        // Clear all markers
         function clearMarkers() {
-            if (state.markers.length === 0) return;
-            
-            if (confirm('Are you sure you want to clear all markers?')) {
-                state.markers = [];
-                state.selectedMarkerId = null;
-                renderMarkers();
+            if (confirm('Clear all markers?')) {
+                markers = [];
+                document.querySelectorAll('.marker').forEach(m => m.remove());
                 updateMarkerList();
                 hidePopup();
             }
         }
 
-        // Update marker list in sidebar
         function updateMarkerList() {
-            if (state.markers.length === 0) {
-                elements.markerList.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <p>No markers added yet</p>
-                    </div>
-                `;
+            if (markers.length === 0) {
+                elements.markerList.innerHTML = '<div class="empty-state">No markers added</div>';
                 return;
             }
-            
+
             let html = '';
-            state.markers.forEach(marker => {
-                const isSelected = marker.id === state.selectedMarkerId;
-                html += `
-                    <div class="marker-item ${isSelected ? 'selected' : ''}" data-id="${marker.id}">
-                        <div class="marker-item-header">
-                            <div class="marker-title">${escapeHtml(marker.title)}</div>
-                            <div class="marker-type-badge marker-type-${marker.type}">${marker.type}</div>
-                        </div>
-                        <div class="marker-description">${escapeHtml(marker.description)}</div>
-                    </div>
-                `;
+            markers.forEach(marker => {
+                html += '<div class="marker-item" data-id="' + marker.id + '">' +
+                       '<strong>' + marker.title + '</strong><br>' +
+                       '<small>' + marker.type + '</small>' +
+                       '</div>';
             });
-            
+
             elements.markerList.innerHTML = html;
-            
-            // Add click events to list items
+
+            // Add click events to marker items
             elements.markerList.querySelectorAll('.marker-item').forEach(item => {
                 item.addEventListener('click', () => {
                     const markerId = parseInt(item.dataset.id);
-                    selectMarker(markerId);
-                    
-                    // Show marker info
-                    const marker = state.markers.find(m => m.id === markerId);
+                    const marker = markers.find(m => m.id === markerId);
                     if (marker) {
-                        const screenX = marker.x * state.imageScale + state.imageOffset.x;
-                        const screenY = marker.y * state.imageScale + state.imageOffset.y;
-                        showMarkerInfo(marker, screenX, screenY);
+                        selectedMarkerId = markerId;
+                        elements.markerTitle.value = marker.title;
+                        elements.markerDescription.value = marker.description;
+                        elements.markerLink.value = marker.link;
+                        showMarkerInfo(marker);
                     }
                 });
             });
         }
 
-        // Update link field visibility based on marker type
-        function updateLinkFieldVisibility() {
-            elements.linkField.style.display = state.currentMarkerType === 'link' ? 'block' : 'none';
+        function updateLinkField() {
+            elements.linkField.style.display = currentMarkerType === 'link' ? 'block' : 'none';
         }
 
-        // Save project to localStorage
         function saveProject() {
-            if (!state.currentImage) {
-                alert('Please upload an image first.');
+            if (!currentImage) {
+                alert('Please upload an image first');
                 return;
             }
-            
-            const projectName = prompt('Enter a name for your project:');
+
+            const projectName = prompt('Project name:');
             if (!projectName) return;
-            
+
             const project = {
                 name: projectName,
-                date: new Date().toISOString(),
-                image: state.currentImage,
-                markers: state.markers
+                image: currentImage,
+                markers: markers,
+                date: new Date().toISOString()
             };
-            
-            const projects = JSON.parse(localStorage.getItem('imageMarkerProjects') || '[]');
-            
-            // Check if project with same name exists
-            const existingIndex = projects.findIndex(p => p.name === projectName);
-            if (existingIndex !== -1) {
-                projects[existingIndex] = project;
-            } else {
-                projects.push(project);
-            }
-            
-            localStorage.setItem('imageMarkerProjects', JSON.stringify(projects));
-            loadProjectsList();
-            alert('Project saved successfully!');
+
+            const projects = JSON.parse(localStorage.getItem('projects') || '[]');
+            projects.push(project);
+            localStorage.setItem('projects', JSON.stringify(projects));
+            alert('Project saved!');
         }
 
-        // Load project from localStorage
         function loadProject() {
-            const projects = JSON.parse(localStorage.getItem('imageMarkerProjects') || '[]');
-            
+            const projects = JSON.parse(localStorage.getItem('projects') || '[]');
             if (projects.length === 0) {
-                alert('No saved projects found.');
+                alert('No saved projects');
                 return;
             }
+
+            const projectNames = projects.map(p => p.name).join('\n');
+            const projectName = prompt('Available projects:\n' + projectNames + '\n\nEnter project name:');
             
-            // Create project selection modal
-            const modal = document.createElement('div');
-            modal.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0,0,0,0.5);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 1000;
-            `;
-            
-            const modalContent = document.createElement('div');
-            modalContent.style.cssText = `
-                background: white;
-                padding: 20px;
-                border-radius: var(--border-radius);
-                max-width: 500px;
-                width: 90%;
-                max-height: 80vh;
-                overflow-y: auto;
-            `;
-            
-            let projectsHTML = '<h3 style="margin-bottom: 15px;">Select a Project</h3>';
-            projects.forEach((project, index) => {
-                projectsHTML += `
-                    <div class="project-item" data-index="${index}">
-                        <div class="project-name">${escapeHtml(project.name)}</div>
-                        <div class="project-date">${new Date(project.date).toLocaleString()}</div>
-                    </div>
-                `;
-            });
-            
-            modalContent.innerHTML = projectsHTML;
-            modal.appendChild(modalContent);
-            document.body.appendChild(modal);
-            
-            // Add event listeners to project items
-            modalContent.querySelectorAll('.project-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    const index = parseInt(item.dataset.index);
-                    const project = projects[index];
-                    
-                    // Load the project
-                    state.currentImage = project.image;
-                    state.markers = project.markers || [];
-                    state.selectedMarkerId = null;
-                    
-                    elements.imageDisplay.src = state.currentImage.src;
-                    elements.imageDisplay.style.display = 'block';
-                    elements.emptyState.style.display = 'none';
-                    
+            const project = projects.find(p => p.name === projectName);
+            if (project) {
+                currentImage = project.image;
+                markers = project.markers || [];
+                
+                elements.imageDisplay.src = currentImage.src;
+                elements.imageDisplay.style.display = 'block';
+                elements.emptyState.style.display = 'none';
+                
+                // Recalculate image position
+                setTimeout(() => {
                     calculateImagePosition();
-                    renderMarkers();
+                    renderAllMarkers();
                     updateMarkerList();
-                    
-                    // Close modal
-                    document.body.removeChild(modal);
-                });
-            });
-            
-            // Close modal when clicking outside
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    document.body.removeChild(modal);
-                }
-            });
+                    alert('Project loaded!');
+                }, 100);
+            } else {
+                alert('Project not found');
+            }
         }
 
-        // Load projects list in sidebar
-        function loadProjectsList() {
-            const projects = JSON.parse(localStorage.getItem('imageMarkerProjects') || '[]');
-            
-            if (projects.length === 0) {
-                elements.projectsList.innerHTML = `
-                    <div class="empty-state small">
-                        <p>No saved projects</p>
-                    </div>
-                `;
+        function exportHTML() {
+            if (!currentImage || markers.length === 0) {
+                alert('Please create a project with markers first');
                 return;
             }
-            
-            let html = '';
-            projects.forEach((project, index) => {
-                html += `
-                    <div class="project-item" data-index="${index}">
-                        <div class="project-name">${escapeHtml(project.name)}</div>
-                        <div class="project-date">${new Date(project.date).toLocaleString()}</div>
-                    </div>
-                `;
-            });
-            
-            elements.projectsList.innerHTML = html;
-            
-            // Add click events
-            elements.projectsList.querySelectorAll('.project-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    const index = parseInt(item.dataset.index);
-                    const projects = JSON.parse(localStorage.getItem('imageMarkerProjects') || '[]');
-                    const project = projects[index];
-                    
-                    // Load the project
-                    state.currentImage = project.image;
-                    state.markers = project.markers || [];
-                    state.selectedMarkerId = null;
-                    
-                    elements.imageDisplay.src = state.currentImage.src;
-                    elements.imageDisplay.style.display = 'block';
-                    elements.emptyState.style.display = 'none';
-                    
-                    calculateImagePosition();
-                    renderMarkers();
-                    updateMarkerList();
-                });
-            });
-        }
 
-        // Export project as standalone HTML
-        function exportAsHTML() {
-            if (!state.currentImage || state.markers.length === 0) {
-                alert('Please create a project with markers before exporting.');
-                return;
-            }
+            const projectName = prompt('Project name for export:') || 'Interactive Image';
             
-            const projectName = prompt('Enter a name for your exported project:') || 'Interactive Image';
-            const htmlContent = createStandaloneHTML(projectName);
-            
-            const blob = new Blob([htmlContent], { type: 'text/html' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${projectName.replace(/\s+/g, '_')}.html`;
-            a.click();
-            
-            alert('Standalone HTML file created! You can share this file with anyone.');
-        }
-
-        // Create standalone HTML content
-        function createStandaloneHTML(projectName) {
-            const escapedProjectName = escapeHtml(projectName);
-            const escapedImageSrc = state.currentImage.src;
-            const escapedMarkers = JSON.stringify(state.markers);
-            
-            return `<!DOCTYPE html>
-<html lang="en">
+            const html = `<!DOCTYPE html>
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${escapedProjectName}</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>${projectName}</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .container {
-            max-width: 1000px;
-            width: 100%;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            padding: 30px;
-            text-align: center;
-        }
-        
-        h1 {
-            color: #4361ee;
-            margin-bottom: 20px;
-        }
-        
-        .image-container {
-            position: relative;
-            display: inline-block;
-            max-width: 100%;
-            margin: 20px 0;
-        }
-        
-        #viewerImage {
-            max-width: 100%;
-            max-height: 70vh;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        
-        .marker {
-            position: absolute;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 0.8rem;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            transition: all 0.3s;
-        }
-        
-        .marker:hover {
-            transform: translate(-50%, -50%) scale(1.3);
-        }
-        
-        .marker.info { background: #4cc9f0; }
-        .marker.link { background: #4361ee; }
-        .marker.video { background: #f72585; }
-        .marker.audio { background: #f8961e; }
-        
-        .marker-popup {
-            position: absolute;
-            background: white;
-            border-radius: 8px;
-            padding: 15px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            min-width: 250px;
-            max-width: 300px;
-            z-index: 100;
-            display: none;
-        }
-        
-        .marker-popup h4 {
-            margin-bottom: 8px;
-            color: #4361ee;
-        }
-        
-        .marker-popup p {
-            margin-bottom: 10px;
-            color: #666;
-        }
-        
-        .marker-popup a {
-            color: #4361ee;
-            text-decoration: none;
-            font-weight: 500;
-            word-break: break-all;
-        }
-        
-        .marker-popup a:hover {
-            text-decoration: underline;
-        }
-        
-        .close-popup {
-            position: absolute;
-            top: 8px;
-            right: 12px;
-            cursor: pointer;
-            color: #999;
-            font-weight: bold;
-        }
-        
-        .instructions {
-            color: #666;
-            margin-top: 15px;
-        }
+        body { margin: 20px; text-align: center; font-family: Arial, sans-serif; }
+        .image-container { position: relative; display: inline-block; max-width: 100%; }
+        img { max-width: 100%; height: auto; }
+        .marker { position: absolute; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        .marker.info { background: #17a2b8; }
+        .marker.link { background: #28a745; }
+        .marker.video { background: #dc3545; }
+        .marker.audio { background: #ffc107; }
+        .popup { position: absolute; background: white; border: 1px solid #ccc; padding: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); display: none; z-index: 100; max-width: 300px; border-radius: 5px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>${escapedProjectName}</h1>
-        <div class="image-container">
-            <img id="viewerImage" src="${escapedImageSrc}" alt="Interactive Image">
-            <div id="markersContainer"></div>
-            <div class="marker-popup" id="markerPopup">
-                <span class="close-popup">&times;</span>
-                <h4 id="popupTitle"></h4>
-                <p id="popupDescription"></p>
-                <a id="popupLink" href="#" target="_blank"></a>
-            </div>
+    <h1>${projectName}</h1>
+    <div class="image-container">
+        <img src="${currentImage.src}" alt="Interactive Image" id="exportedImage">
+        <div id="markers"></div>
+        <div class="popup" id="popup">
+            <h4 id="popupTitle"></h4>
+            <p id="popupDesc"></p>
+            <a id="popupLink" href="#" target="_blank"></a>
+            <button onclick="document.getElementById('popup').style.display='none'">Close</button>
         </div>
-        <p class="instructions">Click on the markers to see more information</p>
     </div>
 
     <script>
-        const markersData = ${escapedMarkers};
-        const image = document.getElementById('viewerImage');
-        const markersContainer = document.getElementById('markersContainer');
-        const popup = document.getElementById('markerPopup');
-        const popupTitle = document.getElementById('popupTitle');
-        const popupDescription = document.getElementById('popupDescription');
-        const popupLink = document.getElementById('popupLink');
-        const closePopup = document.querySelector('.close-popup');
-        
-        let imageScale = 1;
-        let imageOffset = { x: 0, y: 0 };
-        
-        function calculateImagePosition() {
-            const container = image.parentElement;
-            const containerWidth = container.clientWidth;
-            const containerHeight = container.clientHeight;
-            const imgWidth = image.naturalWidth;
-            const imgHeight = image.naturalHeight;
-            
-            imageScale = Math.min(
-                containerWidth / imgWidth,
-                containerHeight / imgHeight
-            );
-            
-            imageOffset.x = (containerWidth - imgWidth * imageScale) / 2;
-            imageOffset.y = (containerHeight - imgHeight * imageScale) / 2;
-        }
-        
-        function createMarkers() {
-            markersData.forEach(marker => {
-                const markerElement = document.createElement('div');
-                markerElement.className = \\\`marker \\\${marker.type}\\\`;
-                
-                const screenX = marker.x * imageScale + imageOffset.x;
-                const screenY = marker.y * imageScale + imageOffset.y;
-                
-                markerElement.style.left = \\\`\\\${screenX}px\\\`;
-                markerElement.style.top = \\\`\\\${screenY}px\\\`;
-                
-                let iconClass = 'fas fa-info-circle';
-                if (marker.type === 'link') iconClass = 'fas fa-link';
-                else if (marker.type === 'video') iconClass = 'fas fa-video';
-                else if (marker.type === 'audio') iconClass = 'fas fa-volume-up';
-                
-                markerElement.innerHTML = \\\`<i class="\\\${iconClass}"></i>\\\`;
-                
-                markerElement.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    showMarkerInfo(marker, screenX, screenY);
-                });
-                
-                markersContainer.appendChild(markerElement);
-            });
-        }
-        
-        function showMarkerInfo(marker, x, y) {
-            popupTitle.textContent = marker.title;
-            popupDescription.textContent = marker.description;
-            
-            if (marker.link && marker.type === 'link') {
-                popupLink.href = marker.link;
-                popupLink.textContent = marker.link;
-                popupLink.style.display = 'block';
-            } else {
-                popupLink.style.display = 'none';
-            }
-            
-            const containerRect = image.parentElement.getBoundingClientRect();
-            let popupX = x + 20;
-            let popupY = y;
-            
-            if (popupX + 300 > containerRect.width) {
-                popupX = x - 320;
-            }
-            
-            if (popupY + 200 > containerRect.height) {
-                popupY = y - 200;
-            }
-            
-            popup.style.left = \\\`\\\${popupX}px\\\`;
-            popup.style.top = \\\`\\\${popupY}px\\\`;
-            popup.style.display = 'block';
-        }
-        
-        function hidePopup() {
-            popup.style.display = 'none';
-        }
+        const markers = ${JSON.stringify(markers)};
+        const image = document.getElementById('exportedImage');
         
         image.onload = function() {
-            calculateImagePosition();
-            createMarkers();
+            const imgRect = image.getBoundingClientRect();
+            markers.forEach(marker => {
+                const m = document.createElement('div');
+                m.className = 'marker ' + marker.type;
+                
+                // Convert percentage coordinates to current image size
+                const x = (marker.x / 100) * imgRect.width;
+                const y = (marker.y / 100) * imgRect.height;
+                
+                m.style.left = x + 'px';
+                m.style.top = y + 'px';
+                
+                let icon = 'i';
+                if (marker.type === 'link') icon = 'L';
+                else if (marker.type === 'video') icon = 'V';
+                else if (marker.type === 'audio') icon = 'A';
+                m.textContent = icon;
+                
+                m.onclick = function(e) {
+                    e.stopPropagation();
+                    document.getElementById('popupTitle').textContent = marker.title;
+                    document.getElementById('popupDesc').textContent = marker.description;
+                    const link = document.getElementById('popupLink');
+                    if (marker.link) {
+                        link.href = marker.link;
+                        link.textContent = marker.link;
+                        link.style.display = 'block';
+                    } else {
+                        link.style.display = 'none';
+                    }
+                    document.getElementById('popup').style.left = (x + 30) + 'px';
+                    document.getElementById('popup').style.top = (y - 20) + 'px';
+                    document.getElementById('popup').style.display = 'block';
+                };
+                document.getElementById('markers').appendChild(m);
+            });
         };
         
-        if (image.complete) {
-            calculateImagePosition();
-            createMarkers();
-        }
-        
-        closePopup.addEventListener('click', hidePopup);
-        
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.marker') && !e.target.closest('.marker-popup')) {
-                hidePopup();
+        document.addEventListener('click', function(e) {
+            if (!e.target.classList.contains('marker')) {
+                document.getElementById('popup').style.display = 'none';
             }
         });
         
-        window.addEventListener('resize', () => {
-            calculateImagePosition();
-            markersContainer.innerHTML = '';
-            createMarkers();
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            document.getElementById('markers').innerHTML = '';
+            if (image.complete) {
+                image.onload();
+            }
         });
-    </script>
+    <\/script>
 </body>
 </html>`;
+
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = projectName.replace(/ /g, '_') + '.html';
+            a.click();
+            
+            alert('HTML file exported!');
         }
 
-        // Utility function to escape HTML
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
+        // Handle window resize to reposition markers
+        window.addEventListener('resize', function() {
+            if (currentImage) {
+                calculateImagePosition();
+                renderAllMarkers();
+            }
+        });
 
-        // Initialize the app
+        // Start the app
         document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
