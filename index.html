@@ -646,14 +646,18 @@
                 fileInput.classList.remove('dragover');
             });
 
-            fileInput.addEventListener('drop', (e) => {
-                e.preventDefault();
-                fileInput.classList.remove('dragover');
-                if (e.dataTransfer.files.length) {
-                    imageUpload.files = e.dataTransfer.files;
-                    handleImageUpload({ target: { files: e.dataTransfer.files } });
-                }
-            });
+fileInput.addEventListener('drop', (e) => {
+    e.preventDefault();
+    fileInput.classList.remove('dragover');
+    if (e.dataTransfer.files.length) {
+        // Create a proper event-like object with preventDefault method
+        const fakeEvent = {
+            target: { files: e.dataTransfer.files },
+            preventDefault: () => {} // Add empty preventDefault method
+        };
+        handleImageUpload(fakeEvent);
+    }
+});
 
             markerTypes.forEach(type => {
                 type.addEventListener('click', () => {
@@ -694,13 +698,33 @@
         }
 
         function handleImageUpload(event) {
+            event.preventDefault(); // FIX: Added preventDefault
+            
             const file = event.target.files[0];
             if (!file) return;
+            
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                alert('Please upload a valid image file');
+                return;
+            }
+            
+            // Validate file size (e.g., 10MB limit)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('Image file too large. Please choose a file smaller than 10MB');
+                return;
+            }
 
+            // Show loading state
+            fileInput.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+            
             const reader = new FileReader();
             reader.onload = function(e) {
                 const img = new Image();
                 img.onload = function() {
+                    // Restore file input UI
+                    fileInput.innerHTML = '<i class="fas fa-cloud-upload-alt" style="font-size: 24px; margin-bottom: 10px;"></i><div>Click to upload image or drag & drop</div>';
+                    
                     currentImage = {
                         src: e.target.result,
                         width: img.width,
@@ -715,6 +739,10 @@
                     updateMarkerList();
                     renderAllMarkers();
                     saveToHistory();
+                };
+                img.onerror = function() {
+                    fileInput.innerHTML = '<i class="fas fa-cloud-upload-alt" style="font-size: 24px; margin-bottom: 10px;"></i><div>Click to upload image or drag & drop</div>';
+                    alert('Error loading image. Please try another file.');
                 };
                 img.src = e.target.result;
             };
@@ -766,82 +794,84 @@
             imageContainer.appendChild(previewMarker);
         }
 
-        function addMarker(event) {
-            if (!currentImage) {
-                alert('Please upload an image first!');
-                return;
-            }
+function addMarker(event) {
+    if (!currentImage) {
+        alert('Please upload an image first!');
+        return;
+    }
 
-            // FIXED: Only prevent adding markers when clicking on existing markers
-            if (event.target.classList.contains('marker')) {
-                return;
-            }
+    // FIX: Only prevent marker creation when clicking on markers OR the popup
+    // Allow clicks on the image itself
+    if (event.target.classList.contains('marker') || 
+        event.target.closest('.marker-popup')) {
+        return;
+    }
 
-            const containerRect = imageContainer.getBoundingClientRect();
-            const imgRect = imageDisplay.getBoundingClientRect();
-            
-            // Calculate click position relative to the image container
-            const clickX = event.clientX - containerRect.left;
-            const clickY = event.clientY - containerRect.top;
-            
-            // Calculate position relative to the actual image
-            const imageRelativeX = event.clientX - imgRect.left;
-            const imageRelativeY = event.clientY - imgRect.top;
-            
-            // Only add marker if click is within the image bounds
-            if (imageRelativeX < 0 || imageRelativeX > imgRect.width || 
-                imageRelativeY < 0 || imageRelativeY > imgRect.height) {
-                return;
-            }
-            
-            // Convert to image coordinates (percentage based)
-            const imageX = (imageRelativeX / imgRect.width) * 100;
-            const imageY = (imageRelativeY / imgRect.height) * 100;
+    // Remove preview marker before adding actual marker
+    if (previewMarker) {
+        previewMarker.remove();
+        previewMarker = null;
+    }
 
-            // Validate marker data before saving
-            const markerData = {
-                id: Date.now(),
-                type: currentMarkerType,
-                x: imageX,
-                y: imageY,
-                displayX: clickX,
-                displayY: clickY,
-                title: markerTitle.value || 'New Marker',
-                description: markerDescription.value || '',
-                link: markerLink.value || '',
-                video: markerVideo.value || '',
-                audio: markerAudio.value || ''
-            };
+    const containerRect = imageContainer.getBoundingClientRect();
+    const imgRect = imageDisplay.getBoundingClientRect();
+    
+    // Calculate click position relative to the image container
+    const clickX = event.clientX - containerRect.left;
+    const clickY = event.clientY - containerRect.top;
+    
+    // Calculate position relative to the actual image
+    const imageRelativeX = event.clientX - imgRect.left;
+    const imageRelativeY = event.clientY - imgRect.top;
+    
+    // Only add marker if click is within the image bounds
+    if (imageRelativeX < 0 || imageRelativeX > imgRect.width || 
+        imageRelativeY < 0 || imageRelativeY > imgRect.height) {
+        return;
+    }
+    
+    // Convert to image coordinates (percentage based)
+    const imageX = (imageRelativeX / imgRect.width) * 100;
+    const imageY = (imageRelativeY / imgRect.height) * 100;
 
-            const errors = validateMarkerData(markerData);
-            if (errors.length > 0) {
-                alert('Please fix the following errors:\n' + errors.join('\n'));
-                return;
-            }
+    // Validate marker data before saving
+    const markerData = {
+        id: Date.now(),
+        type: currentMarkerType,
+        x: imageX,
+        y: imageY,
+        displayX: clickX,
+        displayY: clickY,
+        title: markerTitle.value || 'New Marker',
+        description: markerDescription.value || '',
+        link: markerLink.value || '',
+        video: markerVideo.value || '',
+        audio: markerAudio.value || ''
+    };
 
-            console.log('Adding marker with data:', markerData);
+    const errors = validateMarkerData(markerData);
+    if (errors.length > 0) {
+        alert('Please fix the following errors:\n' + errors.join('\n'));
+        return;
+    }
 
-            markers.push(markerData);
-            renderMarker(markerData);
-            updateMarkerList();
-            saveToHistory();
+    console.log('Adding marker with data:', markerData);
 
-            // Clear form
-            markerTitle.value = '';
-            markerDescription.value = '';
-            markerLink.value = '';
-            markerVideo.value = '';
-            markerAudio.value = '';
-            
-            // Reset to add mode
-            resetForm();
-            
-            // Remove preview marker
-            if (previewMarker) {
-                previewMarker.remove();
-                previewMarker = null;
-            }
-        }
+    markers.push(markerData);
+    renderMarker(markerData);
+    updateMarkerList();
+    saveToHistory();
+
+    // Clear form
+    markerTitle.value = '';
+    markerDescription.value = '';
+    markerLink.value = '';
+    markerVideo.value = '';
+    markerAudio.value = '';
+    
+    // Reset to add mode
+    resetForm();
+}
 
         function validateMarkerData(marker) {
             const errors = [];
@@ -903,11 +933,11 @@
             // Recalculate display positions for all markers
             markers.forEach(marker => {
                 const imgRect = imageDisplay.getBoundingClientRect();
-                const containerRect = imageContainer.getBoundingClientRect();
                 
                 // Calculate the actual pixel position based on percentage coordinates
-                const displayX = (marker.x / 100) * imgRect.width + (imgRect.left - containerRect.left);
-                const displayY = (marker.y / 100) * imgRect.height + (imgRect.top - containerRect.top);
+                // Relative to the image container, not the viewport
+                const displayX = (marker.x / 100) * imgRect.width;
+                const displayY = (marker.y / 100) * imgRect.height;
                 
                 // Update the marker's display position
                 marker.displayX = displayX;
@@ -1115,7 +1145,8 @@
         function deleteMarkerHandler() {
             if (selectedMarkerId && confirm('Delete this marker?')) {
                 markers = markers.filter(m => m.id !== selectedMarkerId);
-                document.querySelector(`.marker[data-id="${selectedMarkerId}"]`).remove();
+                const markerElement = document.querySelector(`.marker[data-id="${selectedMarkerId}"]`);
+                if (markerElement) markerElement.remove();
                 updateMarkerList();
                 hidePopup();
                 resetForm();
@@ -1218,7 +1249,8 @@
                 item.querySelector('.delete-marker').addEventListener('click', (e) => {
                     e.stopPropagation();
                     markers = markers.filter(m => m.id !== markerId);
-                    document.querySelector(`.marker[data-id="${markerId}"]`).remove();
+                    const markerElement = document.querySelector(`.marker[data-id="${markerId}"]`);
+                    if (markerElement) markerElement.remove();
                     updateMarkerList();
                     if (selectedMarkerId === markerId) {
                         hidePopup();
