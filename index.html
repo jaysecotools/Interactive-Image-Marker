@@ -834,7 +834,7 @@ function addMarker(event) {
     const imageX = (imageRelativeX / imgRect.width) * 100;
     const imageY = (imageRelativeY / imgRect.height) * 100;
 
-    // Validate marker data before saving
+    // Create a new marker with minimal data first
     const markerData = {
         id: Date.now(),
         type: currentMarkerType,
@@ -842,18 +842,12 @@ function addMarker(event) {
         y: imageY,
         displayX: clickX,
         displayY: clickY,
-        title: markerTitle.value || 'New Marker',
-        description: markerDescription.value || '',
-        link: markerLink.value || '',
-        video: markerVideo.value || '',
-        audio: markerAudio.value || ''
+        title: 'New Marker', // Default title
+        description: '', // Empty description
+        link: '',
+        video: '',
+        audio: ''
     };
-
-    const errors = validateMarkerData(markerData);
-    if (errors.length > 0) {
-        alert('Please fix the following errors:\n' + errors.join('\n'));
-        return;
-    }
 
     console.log('Adding marker with data:', markerData);
 
@@ -862,15 +856,24 @@ function addMarker(event) {
     updateMarkerList();
     saveToHistory();
 
-    // Clear form
-    markerTitle.value = '';
-    markerDescription.value = '';
-    markerLink.value = '';
-    markerVideo.value = '';
-    markerAudio.value = '';
+    // NEW: Automatically select and edit the newly created marker
+    selectMarker(markerData.id);
     
-    // Reset to add mode
-    resetForm();
+    // Populate form with default values for the new marker
+    markerTitle.value = markerData.title;
+    markerDescription.value = markerData.description;
+    markerLink.value = markerData.link;
+    markerVideo.value = markerData.video;
+    markerAudio.value = markerData.audio;
+    
+    // Show delete button since we're now in edit mode
+    deleteMarker.style.display = 'inline-block';
+    
+    // Show marker info popup
+    showMarkerInfo(markerData);
+    
+    // FIX: Don't reset the form - keep it populated for editing
+    // The user can now immediately edit the marker info
 }
 
         function validateMarkerData(marker) {
@@ -1121,26 +1124,48 @@ function addMarker(event) {
             markerPopup.style.display = 'none';
         }
 
-        function saveMarkerHandler() {
-            if (selectedMarkerId) {
-                // Update existing marker
-                const marker = markers.find(m => m.id === selectedMarkerId);
-                if (marker) {
-                    marker.title = markerTitle.value;
-                    marker.description = markerDescription.value;
-                    marker.link = markerLink.value;
-                    marker.video = markerVideo.value;
-                    marker.audio = markerAudio.value;
-                    marker.type = currentMarkerType;
-                    updateMarkerList();
-                    renderAllMarkers();
-                    saveToHistory();
-                    alert('Marker updated!');
-                }
-            } else {
-                alert('Click on the image to add a marker first');
+function saveMarkerHandler() {
+    if (selectedMarkerId) {
+        // Update existing marker
+        const marker = markers.find(m => m.id === selectedMarkerId);
+        if (marker) {
+            // Validate the data before saving
+            const errors = validateMarkerData({
+                title: markerTitle.value,
+                type: currentMarkerType,
+                link: markerLink.value,
+                video: markerVideo.value,
+                audio: markerAudio.value
+            });
+            
+            if (errors.length > 0) {
+                alert('Please fix the following errors:\n' + errors.join('\n'));
+                return;
             }
+            
+            // Update marker data
+            marker.title = markerTitle.value;
+            marker.description = markerDescription.value;
+            marker.link = markerLink.value;
+            marker.video = markerVideo.value;
+            marker.audio = markerAudio.value;
+            marker.type = currentMarkerType;
+            
+            updateMarkerList();
+            renderAllMarkers();
+            saveToHistory();
+            
+            // Update the popup if it's open
+            if (markerPopup.style.display === 'block') {
+                showMarkerInfo(marker);
+            }
+            
+            alert('Marker updated!');
         }
+    } else {
+        alert('Please click on the image to add a marker first, or select an existing marker to edit.');
+    }
+}
 
         function deleteMarkerHandler() {
             if (selectedMarkerId && confirm('Delete this marker?')) {
@@ -1281,25 +1306,28 @@ function addMarker(event) {
             // Info type doesn't need any URL field, so they all stay hidden
         }
 
-        function resetForm() {
-            markerTitle.value = '';
-            markerDescription.value = '';
-            markerLink.value = '';
-            markerVideo.value = '';
-            markerAudio.value = '';
-            deleteMarker.style.display = 'none';
-            selectedMarkerId = null;
-            
-            // Deselect all markers
-            document.querySelectorAll('.marker').forEach(m => m.classList.remove('selected'));
-            document.querySelectorAll('.marker-item').forEach(m => m.classList.remove('selected'));
-            
-            // Reset to info marker type
-            markerTypes.forEach(t => t.classList.remove('active'));
-            document.querySelector('.marker-type[data-type="info"]').classList.add('active');
-            currentMarkerType = 'info';
-            updateFieldsVisibility();
-        }
+function resetForm() {
+    markerTitle.value = '';
+    markerDescription.value = '';
+    markerLink.value = '';
+    markerVideo.value = '';
+    markerAudio.value = '';
+    deleteMarker.style.display = 'none';
+    selectedMarkerId = null;
+    
+    // Deselect all markers
+    document.querySelectorAll('.marker').forEach(m => m.classList.remove('selected'));
+    document.querySelectorAll('.marker-item').forEach(m => m.classList.remove('selected'));
+    
+    // Reset to info marker type
+    markerTypes.forEach(t => t.classList.remove('active'));
+    document.querySelector('.marker-type[data-type="info"]').classList.add('active');
+    currentMarkerType = 'info';
+    updateFieldsVisibility();
+    
+    // Hide any open popup
+    hidePopup();
+}
 
         // History management functions
         function saveToHistory() {
