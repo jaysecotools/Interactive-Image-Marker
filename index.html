@@ -698,7 +698,6 @@ fileInput.addEventListener('drop', (e) => {
         }
 
         function handleImageUpload(event) {
-            event.preventDefault(); // FIX: Added preventDefault
             
             const file = event.target.files[0];
             if (!file) return;
